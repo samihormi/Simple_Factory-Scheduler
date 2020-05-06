@@ -22,6 +22,7 @@ void addPEIOD(char arr[]);
 void addDate(char input[3][SIZE], int x, int start, int end, bool stDate);
 void addORDER(char arr[]);
 void addBATCH(char arr[], int count);
+void printSchedule();
 
 int main(int argc,char *argv[]){
     char command[100];
@@ -178,4 +179,17 @@ void addBATCH(char arr[], int count){
         addORDER(buf);
     }
     fclose(fp);
+}
+
+void printSchedule(){
+    char curDate[20], product[20], order[20], quantity[20], dueDate[20];
+    int i;
+    int total = totalday(endDate[0], endDate[1], endDate[2]) - totalday(startDate[0], startDate[1], startDate[2]);
+    printf("Plant_X (300 per day)\n");
+    printf("%d-%d-%d to %d-%d-%d\n", startDate[0], startDate[1], startDate[2], endDate[0], endDate[1], endDate[2]);
+    printf("    Date       Product Name      Order Number     Quantity(Produced)    Due Date\n");
+
+    for (i = 0; i < total; i++) {
+        printf("%-10s \t %-12s \t %-10s \t %-5s \t %-10s \n", curDate, product, order, quantity, dueDate);
+    }
 }
