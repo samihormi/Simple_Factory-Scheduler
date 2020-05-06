@@ -19,12 +19,14 @@ const int SIZE = 80;
 long numDays;
 
 long totalday(int year, int month, int day,int year1, int month1, int day1);
+void schChild(int in_pipe[][2],int out_pipe[][2]);
 void runcmd(char command[],int count);
 void addPEIOD(char arr[]);
 void addDate(char input[3][SIZE], int x, int start, int end, bool stDate);
 void addORDER(char arr[]);
 void addBATCH(char arr[], int count);
 void printSchedule();
+void createChild();
 
 int main(int argc,char *argv[]){
     //int n=totalday(2020,06,01,2020,07,30);
@@ -66,20 +68,18 @@ long totalday(int year, int month, int day,int year1, int month1, int day1)
     total1 += day1;
     return total1-total;
 }
-void schChild(int in_pipe[][2],int out_pipe[][2]){
+void schChild(int in_pipe[][2],int out_pipe[][2]) {
     close(in_pipe[0][1]);
     close(out_pipe[0][0]);
-    char deck[28][3];
+    char deck[5][10];
     int n;
-    while ((n=read(in_pipe[0][0], deck, sizeof(deck)) > 0)) {
-    if (strcmp(token,"FCFS")==0){
-        for (int i = 0; i < numOrders ; ++i) {
-
+    while ((n = read(in_pipe[0][0], deck, sizeof(deck)) > 0)) {
+        if (strcmp(deck[0], "FCFS") == 0) {
+            printf("its alla");
         }
     }
 }
-
-void runcmd(char command[],int count){
+void createChild(){
     int ppid = getpid();
     int in_pipe[1][2];
     int out_pipe[1][2];
@@ -101,6 +101,9 @@ void runcmd(char command[],int count){
         close(in_pipe[0][0]);
         close(out_pipe[0][1]);
     }
+}
+void runcmd(char command[],int count){
+
     char *ptr = strstr(command,"addPEIOD");
     if(ptr != NULL){
         addPEIOD(command);
@@ -121,7 +124,8 @@ void runcmd(char command[],int count){
                     strtok(command, " ");
                     char * token = strtok(NULL, " ");
                     token = strtok(NULL, " ");
-                    write(in_pipe[0][1],)
+                    //strcpy(deck[0],token);
+                    //write(in_pipe[0][1],deck,sizeof(deck));
                     //runPLS(ptr,count);
                     printf("runPLS");
                 }
@@ -169,22 +173,20 @@ void addPEIOD(char arr[]){
 }
 
 void addORDER(char arr[]){
+    FILE *fp = fopen("orders.txt","w");
+    if(fp == NULL)
+    {
+        printf("Error!");
+        exit(1);
+    }
     strtok(arr, " ");
     char * token = strtok(NULL, " ");
-
-    strcpy(schedule[numOrders].orderNum, token);
-
-    token = strtok(NULL, " ");
-    strcpy(schedule[numOrders].dueDate, token);
-
-    token = strtok(NULL, " ");
-    schedule[numOrders].quantity = atoi(token);
-
-    token = strtok(NULL, " ");
-    strcpy(schedule[numOrders].productName, token);
-
+    while(token != NULL){
+        fprintf(fp,"%s ",token);
+        token = strtok(NULL, " ");
+    }
+    fclose(fp);
     //printf("%s %s %d %s\n", schedule[numOrders].orderNum, schedule[numOrders].dueDate, schedule[numOrders].quantity, schedule[numOrders].productName);
-    numOrders++;
 }
 
 void addBATCH(char arr[], int count){
@@ -211,7 +213,7 @@ void addBATCH(char arr[], int count){
 void printSchedule(){
     char curDate[20], product[20], order[20], quantity[20], dueDate[20];
     int i;
-    int total = totalday(endDate[0], endDate[1], endDate[2]) - totalday(startDate[0], startDate[1], startDate[2]);
+    int total = totalday(startDate[0], startDate[1], startDate[2],endDate[0], endDate[1], endDate[2]);
     printf("Plant_X (300 per day)\n");
     printf("%d-%d-%d to %d-%d-%d\n", startDate[0], startDate[1], startDate[2], endDate[0], endDate[1], endDate[2]);
     printf("    Date       Product Name      Order Number     Quantity(Produced)    Due Date\n");
