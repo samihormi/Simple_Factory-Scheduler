@@ -173,7 +173,7 @@ void addPEIOD(char arr[]){
 }
 
 void addORDER(char arr[]){
-    FILE *fp = fopen("orders.txt","w");
+    FILE *fp = fopen("orders.txt","ab+");
     if(fp == NULL)
     {
         printf("Error!");
@@ -182,7 +182,8 @@ void addORDER(char arr[]){
     strtok(arr, " ");
     char * token = strtok(NULL, " ");
     while(token != NULL){
-        fprintf(fp,"%s ",token);
+        fprintf(fp," %s",token);
+        fflush(fp);
         token = strtok(NULL, " ");
     }
     fclose(fp);
