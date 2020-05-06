@@ -72,9 +72,10 @@ void schChild(int in_pipe[][2],int out_pipe[][2]){
     char deck[28][3];
     int n;
     while ((n=read(in_pipe[0][0], deck, sizeof(deck)) > 0)) {
-    if (strcmp(token,"FCFS")==0){
-        for (int i = 0; i < numOrders ; ++i) {
+        if (strcmp(token,"FCFS")==0){
+            for (int i = 0; i < numOrders ; ++i) {
 
+            }
         }
     }
 }
