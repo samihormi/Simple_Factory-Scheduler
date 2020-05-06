@@ -3,6 +3,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdbool.h>
+#include <zconf.h>
 
 struct Schedule{
     char orderNum[10];
@@ -28,7 +29,7 @@ int main(int argc,char *argv[]){
     printf("Please enter:\n");
     while(1){
         fgets(command, 100, stdin);
-        if(strncmp(command, "exit", 4) == 0){
+        if(strncmp(command, "exitPLS", 4) == 0){
             break;
         }
         if(strncmp(command, "-1", 2) != 0){
@@ -53,6 +54,13 @@ long totalday(int year, int month, int day)
     total += day;
     return total;
 }
+void schChild(char command[],int in_pipe[][2],int out_pipe[][2]){
+    strtok(command, " ");
+    char * token = strtok(NULL, " ");
+    if (strcmp(token,"FCFS")==0){
+
+    }
+}
 
 void runcmd(char command[],int count){
     char *ptr = strstr(command,"addPEIOD");
@@ -72,6 +80,21 @@ void runcmd(char command[],int count){
             else{
                 ptr=strstr(command,"runPLS");
                 if(ptr != NULL){
+                    int in_pipe[1][2];
+                    int out_pipe[1][2];
+                    if ((pipe(in_pipe[0]) < 0) || (pipe(out_pipe[0]) < 0)) {
+                        printf("Pipe creation error\r\n");
+                        exit(1);
+                    }
+                    int pid = fork();
+                    if (pid < 0) { /* error occurred */
+                        printf("Fork Failed\r\n");
+                        exit(EXIT_FAILURE);
+                    } else if (pid == 0) { // execute child program
+                        schChild(command, in_pipe, out_pipe);
+                        exit(1);
+                        wait(NULL);
+                    }
                     //runPLS(ptr,count);
                     printf("runPLS");
                 }
