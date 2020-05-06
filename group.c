@@ -6,17 +6,19 @@
 #include <zconf.h>
 
 struct Schedule{
+    char Date[11];
+    char productName[10];
     char orderNum[10];
-    char dueDate[11];
     int quantity;
-    char productName[100];
+    char dueDate[11];
 };
 
+struct Schedule schedule[3];
 int startDate[3], endDate[3], numOrders = 0;
-struct Schedule schedule[100];
 const int SIZE = 80;
+long numDays;
 
-long totalday(int year,int month,int day);
+long totalday(int year, int month, int day,int year1, int month1, int day1);
 void runcmd(char command[],int count);
 void addPEIOD(char arr[]);
 void addDate(char input[3][SIZE], int x, int start, int end, bool stDate);
@@ -24,6 +26,7 @@ void addORDER(char arr[]);
 void addBATCH(char arr[], int count);
 
 int main(int argc,char *argv[]){
+    //int n=totalday(2020,06,01,2020,07,30);
     char command[100];
     printf("~~WELCOME TO PLS~~\n\n");
     printf("Please enter:\n");
@@ -41,28 +44,62 @@ int main(int argc,char *argv[]){
     return 0;
 }
 
-long totalday(int year, int month, int day)
+long totalday(int year, int month, int day,int year1, int month1, int day1)
 {
     int months[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
     int i = 0;
-    long total = 0L;
+    long total = 0L,total1 = 0L;
     total = (year - 1) * 365L + (year - 1) / 4 - (year - 1) / 100 + (year - 1) / 400;
     if (!(year % 4) && year % 100 || !(year % 400))
         months[i]++;
     for (i = 0; i < month - 1; i++)
         total += months[i];
     total += day;
-    return total;
-}
-void schChild(char command[],int in_pipe[][2],int out_pipe[][2]){
-    strtok(command, " ");
-    char * token = strtok(NULL, " ");
-    if (strcmp(token,"FCFS")==0){
 
+    i=0;
+    total1 = (year1 - 1) * 365L + (year1 - 1) / 4 - (year1 - 1) / 100 + (year1 - 1) / 400;
+    if (!(year1 % 4) && year1 % 100 || !(year1 % 400))
+        months[i]++;
+    for (i = 0; i < month1 - 1; i++)
+        total1 += months[i];
+    total1 += day1;
+    return total1-total;
+}
+void schChild(int in_pipe[][2],int out_pipe[][2]){
+    close(in_pipe[0][1]);
+    close(out_pipe[0][0]);
+    char deck[28][3];
+    int n;
+    while ((n=read(in_pipe[0][0], deck, sizeof(deck)) > 0)) {
+    if (strcmp(token,"FCFS")==0){
+        for (int i = 0; i < numOrders ; ++i) {
+
+        }
     }
 }
 
 void runcmd(char command[],int count){
+    int ppid = getpid();
+    int in_pipe[1][2];
+    int out_pipe[1][2];
+    char deck[5][10];
+    if ((pipe(in_pipe[0]) < 0) || (pipe(out_pipe[0]) < 0)) {
+        printf("Pipe creation error\r\n");
+        exit(1);
+    }
+    if(getpid()==ppid) {
+        int pid = fork();
+        if (pid < 0) { /* error occurred */
+            printf("Fork Failed\r\n");
+            exit(EXIT_FAILURE);
+        } else if (pid == 0) { // execute child program
+            schChild(in_pipe, out_pipe);
+            exit(1);
+            wait(NULL);
+        }
+        close(in_pipe[0][0]);
+        close(out_pipe[0][1]);
+    }
     char *ptr = strstr(command,"addPEIOD");
     if(ptr != NULL){
         addPEIOD(command);
@@ -80,21 +117,10 @@ void runcmd(char command[],int count){
             else{
                 ptr=strstr(command,"runPLS");
                 if(ptr != NULL){
-                    int in_pipe[1][2];
-                    int out_pipe[1][2];
-                    if ((pipe(in_pipe[0]) < 0) || (pipe(out_pipe[0]) < 0)) {
-                        printf("Pipe creation error\r\n");
-                        exit(1);
-                    }
-                    int pid = fork();
-                    if (pid < 0) { /* error occurred */
-                        printf("Fork Failed\r\n");
-                        exit(EXIT_FAILURE);
-                    } else if (pid == 0) { // execute child program
-                        schChild(command, in_pipe, out_pipe);
-                        exit(1);
-                        wait(NULL);
-                    }
+                    strtok(command, " ");
+                    char * token = strtok(NULL, " ");
+                    token = strtok(NULL, " ");
+                    write(in_pipe[0][1],)
                     //runPLS(ptr,count);
                     printf("runPLS");
                 }
@@ -138,6 +164,7 @@ void addPEIOD(char arr[]){
     addDate(input, 0, 0, 4, false);
     addDate(input, 1, 5, 7, false);
     addDate(input, 2, 8, 10, false);
+    numDays=totalday(startDate[0],startDate[1],startDate[2],endDate[0],endDate[1],endDate[2]);
 }
 
 void addORDER(char arr[]){
