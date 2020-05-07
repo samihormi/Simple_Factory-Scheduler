@@ -43,7 +43,6 @@ int main(int argc,char *argv[]){
         }
         if(strncmp(command, "-1", 2) != 0){
             runcmd(command,sizeof(command)/sizeof(int));
-            getOrder();
             strcpy(command, "-1");
             printf("Please enter:\n");
         }
@@ -86,10 +85,10 @@ char **getOrder(int i, int limit){
 }
 bool isDatevalid(char date1[3],char *order1,int availDate[3],int plant){
     int duedate[3],order;
-    sscanf((const char *) date1[0], "%d", &duedate[0]);
-    sscanf((const char *) date1[1], "%d", &duedate[1]);
-    sscanf((const char *) date1[2], "%d", &duedate[2]);
-    sscanf((const char *) order1, "%d", &order);
+    sscanf( &date1[0], "%d", &duedate[0]);
+    sscanf(&date1[1], "%d", &duedate[1]);
+    sscanf(&date1[2], "%d", &duedate[2]);
+    sscanf( order1, "%d", &order);
     if (totalday(startDate,duedate) >= 0 && totalday(duedate,endDate) >=0 &&
     totalday(availDate,duedate) >=0 && order/totalday(availDate,duedate)>plant){
         return true;
@@ -102,9 +101,9 @@ int* writeSch(int availDate[3],char* product_name,char* order_num,char endD[3],i
     }else{fp = fopen("PlantZ.txt","ab+");}
     int endDate1[3];
     int daysNeed = floor(quantity/sizeplant);
-    sscanf((const char *) endD[0], "%d", &endDate1[0]);
-    sscanf((const char *) endD[1], "%d", &endDate1[1]);
-    sscanf((const char *) endD[2], "%d", &endDate1[2]);
+    sscanf(& endD[0], "%d", &endDate1[0]);
+    sscanf(& endD[1], "%d", &endDate1[1]);
+    sscanf(& endD[2], "%d", &endDate1[2]);
     int months[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
     int days[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
     int *currD = availDate;
@@ -134,7 +133,7 @@ void schChild(int in_pipe[][2],int out_pipe[][2]) {
     close(in_pipe[0][1]);
     close(out_pipe[0][0]);
     char deck[5][10];
-    int n, totaldays=totalday(startDate,endDate),flag=0,ord,j;
+    int n, totaldays=totalday(startDate,endDate),flag=0,ord=0,j=0;
     int availDate[3], sizePlants[] = {300,400,600};
 
     while ((n = read(in_pipe[0][0], deck, sizeof(deck)) > 0)) {
@@ -143,7 +142,7 @@ void schChild(int in_pipe[][2],int out_pipe[][2]) {
             while (ord < numOrders) {
                 char **buf = getOrder(j, j + 4);
                 int ordernum;
-                sscanf((const char *) buf[2], "%d", &ordernum);
+                sscanf(buf[2], "%d", &ordernum);
                 int i, ordValid = 1;
                 for (i = 0; i < 3; ++i) {
                     if (isDatevalid(buf[1], buf[2], availDate, i)) {
@@ -152,12 +151,14 @@ void schChild(int in_pipe[][2],int out_pipe[][2]) {
                     }
                     ordValid = 0;
                 }
-                if (ordValid == 0) { writeInvalid(buf[0], buf[3], buf[1], ordernum) }
+                if (ordValid == 0) { writeInvalid(buf[0], buf[3], buf[1], ordernum); }
                 j+=4;
                 ord++;
             }
             strcpy(deck[0],"done");
             write(out_pipe[0][1],deck,sizeof(deck));
+        }else if (strcmp(deck[0], "f") == 0) {
+            break;
         }
     }
     close(in_pipe[0][0]);
@@ -207,14 +208,15 @@ void runcmd(char command[],int count){
                 if(ptr != NULL){
                     strtok(command, " ");
                     char * token = strtok(NULL, " ");
-                    token = strtok(NULL, " ");
                     createChild(ppid,in_pipe,out_pipe);
                     strcpy(deck[0],token);
                     write(in_pipe[0][1],deck,sizeof(deck));
                     read(out_pipe[0][0],deck,sizeof(deck));
                     printf("%s",deck[0]);
+                    strcpy(deck[0],"f");
+                    write(in_pipe[0][1],deck,sizeof(deck));
                     //runPLS(ptr,count);
-                    printf("runPLS");
+                    //printf("runPLS");
                 }
                 else{
                     //exitPLS();
