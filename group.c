@@ -33,6 +33,8 @@ void writeDays(int begin[3], int end[3], int flag);
 
 int main(int argc,char *argv[]){
     //int n=totalday(2020,06,01,2020,07,30);
+    char**ba=getOrder(0,4);
+    printf("%s",ba[0]);
     char command[100];
     printf("~~WELCOME TO PLS~~\n\n");
     printf("Please enter:\n");
@@ -72,12 +74,18 @@ long totalday(int startDate1[3], int endDate1[3])
 }
 
 char **getOrder(int i, int limit){
-    char **buf = malloc(4*35*sizeof(char));
+    char **buf = malloc(sizeof(char* )*4);
+    for (int j = 0; j < 4; ++j) {
+        *(buf+j) = malloc(sizeof(char)*10);
+    }
+    char buff[10];
     char* filename = "orders.txt";
     FILE *fp = fopen(filename ,"r");
-
-    while(fscanf((FILE*)fp,"%s ",buf[i])){
+    if(fp == NULL){printf("Error!");exit(1);}
+    while(fscanf(fp,"%s\n ",buff)){
         if (i == limit){ break;}
+        strcpy(buf[i],buff);
+        printf("Buffer %s",buf[i]);
         i++;
     }
     fclose(fp);
@@ -129,7 +137,7 @@ int* writeSch(int availDate[3],char* product_name,char* order_num,char endD[3],i
 void writeInvalid(char* product_name,char* order_num,char endD[3],int quantity){
 
 }
-void schChild(int in_pipe[][2],int out_pipe[][2]) {
+/*void schChild(int in_pipe[][2],int out_pipe[][2]) {
     close(in_pipe[0][1]);
     close(out_pipe[0][0]);
     char deck[5][10];
@@ -146,8 +154,7 @@ void schChild(int in_pipe[][2],int out_pipe[][2]) {
                 int i, ordValid = 1;
                 for (i = 0; i < 3; ++i) {
                     if (isDatevalid(buf[1], buf[2], availDate, i)) {
-                        memcpy(availDate, writeSch(availDate, buf[0], buf[3], buf[1], ordernum, sizePlants[i]),
-                               sizeof(availDate));
+                        memcpy(availDate, writeSch(availDate, buf[0], buf[3], buf[1], ordernum, sizePlants[i]),sizeof(availDate));
                     }
                     ordValid = 0;
                 }
@@ -164,6 +171,33 @@ void schChild(int in_pipe[][2],int out_pipe[][2]) {
     close(in_pipe[0][0]);
     close(out_pipe[0][1]);
     printf("Child schedule exited while loop\r\n");
+}*/
+
+void runPLS() {
+    char deck[5][10];
+    int  flag = 0, ord = 0, j = 0;
+    int availDate[3], sizePlants[] = {300, 400, 600};
+
+
+    memcpy(availDate, startDate, sizeof(startDate));
+
+    while (ord < numOrders) {
+        char **buf = getOrder(j, j + 4);
+        int ordernum;
+        sscanf(buf[2], "%d", &ordernum);
+        int i, ordValid = 1;
+        for (i = 0; i < 3; ++i) {
+            if (isDatevalid(buf[1], buf[2], availDate, i)) {
+                memcpy(availDate, writeSch(availDate, buf[0], buf[3], buf[1], ordernum, sizePlants[i]),
+                       sizeof(availDate));
+            }
+            ordValid = 0;
+        }
+        if (ordValid == 0) { writeInvalid(buf[0], buf[3], buf[1], ordernum); }
+        j += 4;
+        ord++;
+    }
+
 }
 void createChild(int ppid, int in_pipe[][2],int out_pipe[][2]){
     if ((pipe(in_pipe[0]) < 0) || (pipe(out_pipe[0]) < 0)) {
@@ -176,7 +210,7 @@ void createChild(int ppid, int in_pipe[][2],int out_pipe[][2]){
             printf("Fork Failed\r\n");
             exit(EXIT_FAILURE);
         } else if (pid == 0) { // execute child program
-            schChild(in_pipe, out_pipe);
+            //schChild(in_pipe, out_pipe);
             exit(1);
             wait(NULL);
         }
@@ -206,15 +240,16 @@ void runcmd(char command[],int count){
             else{
                 ptr=strstr(command,"runPLS");
                 if(ptr != NULL){
-                    strtok(command, " ");
-                    char * token = strtok(NULL, " ");
-                    createChild(ppid,in_pipe,out_pipe);
-                    strcpy(deck[0],token);
-                    write(in_pipe[0][1],deck,sizeof(deck));
-                    read(out_pipe[0][0],deck,sizeof(deck));
-                    printf("%s",deck[0]);
-                    strcpy(deck[0],"f");
-                    write(in_pipe[0][1],deck,sizeof(deck));
+                    runPLS();
+//                    strtok(command, " ");
+//                    char * token = strtok(NULL, " ");
+//                    createChild(ppid,in_pipe,out_pipe);
+//                    strcpy(deck[0],token);
+//                    write(in_pipe[0][1],deck,sizeof(deck));
+//                    read(out_pipe[0][0],deck,sizeof(deck));
+//                    printf("%s",deck[0]);
+//                    strcpy(deck[0],"f");
+//                    write(in_pipe[0][1],deck,sizeof(deck));
                     //runPLS(ptr,count);
                     //printf("runPLS");
                 }
