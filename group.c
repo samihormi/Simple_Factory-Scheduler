@@ -4,6 +4,7 @@
 #include <time.h>
 #include <stdbool.h>
 #include <zconf.h>
+#include <math.h>
 
 struct Schedule{
     char Date[11];
@@ -28,6 +29,7 @@ void addBATCH(char arr[], int count);
 void printSchedule();
 void createChild();
 char **getOrder();
+void writeDays(int begin[3], int end[3], int flag);
 
 int main(int argc,char *argv[]){
     //int n=totalday(2020,06,01,2020,07,30);
@@ -70,32 +72,97 @@ long totalday(int startDate1[3], int endDate1[3])
     return total1-total;
 }
 
-char **getOrder(){
+char **getOrder(int i, int limit){
     char **buf = malloc(4*35*sizeof(char));
     char* filename = "orders.txt";
     FILE *fp = fopen(filename ,"r");
-    int i=0;
+
     while(fscanf((FILE*)fp,"%s ",buf[i])){
-        if (i == 4){ break;}
+        if (i == limit){ break;}
         i++;
     }
     fclose(fp);
     return buf;
 }
+bool isDatevalid(char date1[3],char *order1,int availDate[3],int plant){
+    int duedate[3],order;
+    sscanf((const char *) date1[0], "%d", &duedate[0]);
+    sscanf((const char *) date1[1], "%d", &duedate[1]);
+    sscanf((const char *) date1[2], "%d", &duedate[2]);
+    sscanf((const char *) order1, "%d", &order);
+    if (totalday(startDate,duedate) >= 0 && totalday(duedate,endDate) >=0 &&
+    totalday(availDate,duedate) >=0 && order/totalday(availDate,duedate)>plant){
+        return true;
+    } else {return false;}
+}
+int* writeSch(int availDate[3],char* product_name,char* order_num,char endD[3],int quantity,int sizeplant){
+    FILE *fp;
+    if (sizeplant==300){fp = fopen("PlantX.txt","ab+");
+    }else if (sizeplant==400){fp = fopen("PlantY.txt","ab+");
+    }else{fp = fopen("PlantZ.txt","ab+");}
+    int endDate1[3];
+    int daysNeed = floor(quantity/sizeplant);
+    sscanf((const char *) endD[0], "%d", &endDate1[0]);
+    sscanf((const char *) endD[1], "%d", &endDate1[1]);
+    sscanf((const char *) endD[2], "%d", &endDate1[2]);
+    int months[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+    int days[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+    int *currD = availDate;
+    int i,j=0,k;
+    for ( i = 0; i < 12; ++i) {
+        if (currD[1]==months[i]){ break;}
+    }
+    k=0;
+    int dailyProd = quantity%sizeplant,capacity=sizeplant;
+    while (k < daysNeed) {
+        if (currD[2]+k <= days[i]){
+            if (dailyProd != 0 && k == daysNeed-1){capacity=dailyProd;}
+            fprintf(fp,"%d-%d-%d %s %s %d %s\n",availDate[0],availDate[1],availDate[2],product_name,order_num,capacity,endD);
+            k++;
+        }else {
+            currD[1] += 1; // go to next month
+            currD[2] = 1;  // start from first day
+            i++;
+        }
+    }
+    return currD;
+}
+void writeInvalid(char* product_name,char* order_num,char endD[3],int quantity){
+
+}
 void schChild(int in_pipe[][2],int out_pipe[][2]) {
     close(in_pipe[0][1]);
     close(out_pipe[0][0]);
     char deck[5][10];
-    int n, totaldays=totalday(startDate,endDate);
+    int n, totaldays=totalday(startDate,endDate),flag=0,ord,j;
+    int availDate[3], sizePlants[] = {300,400,600};
+
     while ((n = read(in_pipe[0][0], deck, sizeof(deck)) > 0)) {
+        if (flag==0){memcpy(availDate,startDate,sizeof(startDate));}
         if (strcmp(deck[0], "FCFS") == 0) {
-            char **buf = getOrder();
-            if (buf[2]/totaldays(startDate,buf[1]))
+            while (ord < numOrders) {
+                char **buf = getOrder(j, j + 4);
+                int ordernum;
+                sscanf((const char *) buf[2], "%d", &ordernum);
+                int i, ordValid = 1;
+                for (i = 0; i < 3; ++i) {
+                    if (isDatevalid(buf[1], buf[2], availDate, i)) {
+                        memcpy(availDate, writeSch(availDate, buf[0], buf[3], buf[1], ordernum, sizePlants[i]),
+                               sizeof(availDate));
+                    }
+                    ordValid = 0;
+                }
+                if (ordValid == 0) { writeInvalid(buf[0], buf[3], buf[1], ordernum) }
+                j+=4;
+                ord++;
+            }
+            strcpy(deck[0],"done");
+            write(out_pipe[0][1],deck,sizeof(deck));
         }
     }
     close(in_pipe[0][0]);
     close(out_pipe[0][1]);
-    printf("Child sch exited while loop\r\n");
+    printf("Child schedule exited while loop\r\n");
 }
 void createChild(int ppid, int in_pipe[][2],int out_pipe[][2]){
     if ((pipe(in_pipe[0]) < 0) || (pipe(out_pipe[0]) < 0)) {
@@ -141,9 +208,11 @@ void runcmd(char command[],int count){
                     strtok(command, " ");
                     char * token = strtok(NULL, " ");
                     token = strtok(NULL, " ");
-                    strcpy(deck[0],token);
                     createChild(ppid,in_pipe,out_pipe);
+                    strcpy(deck[0],token);
                     write(in_pipe[0][1],deck,sizeof(deck));
+                    read(out_pipe[0][0],deck,sizeof(deck));
+                    printf("%s",deck[0]);
                     //runPLS(ptr,count);
                     printf("runPLS");
                 }
@@ -171,26 +240,43 @@ void addDate(char input[3][SIZE], int x, int start, int end, bool stDate){
         endDate[x] = atoi(temp);
 }
 // We assume that the period is in the same year
-void writeDays() {
+void writeDays(int begin[3], int end[3], int flag) {
+    FILE *px = fopen("PlantX.txt","ab+");
+    FILE *py = fopen("PlantY.txt","ab+");
+    FILE *pz = fopen("PlantZ.txt","ab+");
+    if(px == NULL || py == NULL || pz == NULL){printf("Error!");exit(1);}
+
+    char newline[] = "NA NA NA NA \n";
     int months[] = {1,2,3,4,5,6,7,8,9,10,11,12};
     int days[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
     if (startDate[0]%4==0){days[1]=29;}
-    int *currD = startDate,i,j,k,l;
+    int *currD = begin,i,j,k,l;
     for ( i = 0; i < 12; ++i) {
         if (currD[1]==months[i]){ break;}
     }
     k=0;
-    while (memcmp(currD,endDate)) {
+    while (memcmp(currD,end,sizeof(end)) != 0) {
         while (currD[2]+k<=days[i]){
             printf("%d-%d-%d",currD[0],currD[1],currD[2]+k);
+            fwrite(currD,sizeof(currD),1,px);
+            fwrite(currD,sizeof(currD),1,py);
+            fwrite(currD,sizeof(currD),1,pz);
+            if (flag==1){
+                fwrite(newline,sizeof(newline),1,px);
+                fwrite(newline,sizeof(newline),1,py);
+                fwrite(newline,sizeof(newline),1,pz);
+            }
             k++;
         }
         currD[1]+=1; // go to next month
         currD[2]=1;  // start from first day
         i++;
     }
+    fclose(px);
+    fclose(py);
+    fclose(pz);
 
-};
+}
 
 void addPEIOD(char arr[]){
     int i=0;
@@ -209,7 +295,6 @@ void addPEIOD(char arr[]){
     addDate(input, 1, 5, 7, false);
     addDate(input, 2, 8, 10, false);
     numDays = totalday(startDate, endDate);
-    writeDays();
 }
 
 void addORDER(char arr[]){
@@ -222,11 +307,12 @@ void addORDER(char arr[]){
     strtok(arr, " ");
     char * token = strtok(NULL, " ");
     while(token != NULL){
-        fprintf(fp," %s",token);
+        fprintf(fp,"%s ",token);
         fflush(fp);
         token = strtok(NULL, " ");
     }
     fclose(fp);
+    numOrders++;
     //printf("%s %s %d %s\n", schedule[numOrders].orderNum, schedule[numOrders].dueDate, schedule[numOrders].quantity, schedule[numOrders].productName);
 }
 
@@ -254,9 +340,9 @@ void addBATCH(char arr[], int count){
 void printSchedule(){
     char curDate[20], product[20], order[20], quantity[20], dueDate[20];
     int i;
-    int total = totalday(startDate1[0], startDate1[1], startDate1[2],endDate1[0], endDate1[1], endDate1[2]);
+    int total = totalday(startDate,endDate);
     printf("Plant_X (300 per day)\n");
-    printf("%d-%d-%d to %d-%d-%d\n", startDate1[0], startDate1[1], startDate1[2], endDate1[0], endDate1[1], endDate1[2]);
+    printf("%d-%d-%d to %d-%d-%d\n", startDate[0], startDate[1], startDate[2], endDate[0], endDate[1], endDate[2]);
     printf("    Date       Product Name      Order Number     Quantity(Produced)    Due Date\n");
 
     for (i = 0; i < total; i++) {
