@@ -76,14 +76,17 @@ void schChild(int in_pipe[][2],int out_pipe[][2]) {
     while ((n = read(in_pipe[0][0], deck, sizeof(deck)) > 0)) {
         if (strcmp(deck[0], "FCFS") == 0) {
             printf("its alla");
+            char buf[150];
+            char* filename = "order.txt";
+            FILE *fp = fopen(filename ,"r");
+            while(fgets(buf, 150, (FILE*)fp) != NULL){
+                //addORDER(buf);
+            }
+            fclose(fp);
         }
     }
 }
-void createChild(){
-    int ppid = getpid();
-    int in_pipe[1][2];
-    int out_pipe[1][2];
-    char deck[5][10];
+void createChild(int ppid, int in_pipe[][2],int out_pipe[][2]){
     if ((pipe(in_pipe[0]) < 0) || (pipe(out_pipe[0]) < 0)) {
         printf("Pipe creation error\r\n");
         exit(1);
@@ -103,7 +106,10 @@ void createChild(){
     }
 }
 void runcmd(char command[],int count){
-
+    int ppid = getpid();
+    int in_pipe[1][2];
+    int out_pipe[1][2];
+    char deck[5][10];
     char *ptr = strstr(command,"addPEIOD");
     if(ptr != NULL){
         addPEIOD(command);
@@ -124,8 +130,9 @@ void runcmd(char command[],int count){
                     strtok(command, " ");
                     char * token = strtok(NULL, " ");
                     token = strtok(NULL, " ");
-                    //strcpy(deck[0],token);
-                    //write(in_pipe[0][1],deck,sizeof(deck));
+                    strcpy(deck[0],token);
+                    createChild(ppid,in_pipe,out_pipe);
+                    write(in_pipe[0][1],deck,sizeof(deck));
                     //runPLS(ptr,count);
                     printf("runPLS");
                 }
