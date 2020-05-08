@@ -15,7 +15,7 @@ struct Schedule{
 };
 
 struct Schedule schedule[3];
-int startDate[3], endDate[3], numOrders = 0;
+int startDate[3], endDate[3], numOrders = 3;
 const int SIZE = 80;
 long numDays;
 
@@ -30,10 +30,11 @@ void printSchedule();
 void createChild();
 char **getOrder();
 void writeDays(int begin[3], int end[3], int flag);
-
+void runPLS();
+bool isDatevalid(char date1[3],char *order1,int availDate[3],int plant);
 int main(int argc,char *argv[]){
     //int n=totalday(2020,06,01,2020,07,30);
-    char**ba=getOrder(0,4);
+    char**ba=getOrder(0,4,1);
     printf("%s",ba[1]);
     char command[100];
     printf("~~WELCOME TO PLS~~\n\n");
@@ -45,6 +46,7 @@ int main(int argc,char *argv[]){
         }
         if(strncmp(command, "-1", 2) != 0){
             runcmd(command,sizeof(command)/sizeof(int));
+            runPLS();
             strcpy(command, "-1");
             printf("Please enter:\n");
         }
@@ -73,21 +75,28 @@ long totalday(int startDate1[3], int endDate1[3])
     return total1-total;
 }
 
-char ** getOrder(int i, int limit){
+char ** getOrder(int i, int limit,int line_num){
     char **buf = malloc(sizeof(char* )*4);
     for (int j = 0; j < 4; ++j) {
         buf[j] = malloc(sizeof(char)*10);
     }
 //    strcpy(buf[0],"PArin");
 //    strcpy(buf[1],"Hiotra");
-    char buff[11];
+    int count = 0;
+    char buff[11],line[100],delimit[]=" \n";
     char* filename = "orders.txt";
     FILE *fp = fopen(filename ,"r");
     if(fp == NULL){printf("Error!");exit(1);}
-    while(fscanf(fp,"%s ",buff) != EOF){
-        if (i == limit){ break;}
-        strcpy(buf[i],buff);
-        i++;
+    while (fgets(line,sizeof(line),fp)!=NULL){
+        if (count==line_num){
+            char * token = strtok(line, delimit);
+            while(token != NULL){
+                if (i == limit){ break;}
+                strcpy(buf[i++], token);
+                token = strtok(NULL, delimit);
+            }
+            break;
+        }else{count++;}
     }
     fclose(fp);
     return buf;
@@ -95,11 +104,13 @@ char ** getOrder(int i, int limit){
 bool isDatevalid(char date1[3],char *order1,int availDate[3],int plant){
     int duedate[3],order;
     sscanf( &date1[0], "%d", &duedate[0]);
-    sscanf(&date1[1], "%d", &duedate[1]);
-    sscanf(&date1[2], "%d", &duedate[2]);
+    sscanf(&date1[5], "%d", &duedate[1]);
+    sscanf(&date1[8], "%d", &duedate[2]);
     sscanf( order1, "%d", &order);
-    if (totalday(startDate,duedate) >= 0 && totalday(duedate,endDate) >=0 &&
-    totalday(availDate,duedate) >=0 && order/totalday(availDate,duedate)>plant){
+    int c1 = totalday(startDate,duedate);
+    int c2 = totalday(duedate,endDate);
+    int c3 = totalday(availDate,duedate);
+    if (c1 >= 0 && c2 >=0 && c3 >=0 && order/c3 >plant){
         return true;
     } else {return false;}
 }
@@ -109,34 +120,41 @@ int* writeSch(int availDate[3],char* product_name,char* order_num,char endD[3],i
     }else if (sizeplant==400){fp = fopen("PlantY.txt","ab+");
     }else{fp = fopen("PlantZ.txt","ab+");}
     int endDate1[3];
-    int daysNeed = floor(quantity/sizeplant);
+    int daysNeed = ceil((double)quantity/(double )sizeplant);
     sscanf(& endD[0], "%d", &endDate1[0]);
-    sscanf(& endD[1], "%d", &endDate1[1]);
-    sscanf(& endD[2], "%d", &endDate1[2]);
+    sscanf(& endD[5], "%d", &endDate1[1]);
+    sscanf(& endD[8], "%d", &endDate1[2]);
     int months[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
     int days[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
     int *currD = availDate;
-    int i,j=0,k;
+    int i,j=0,k,l;
     for ( i = 0; i < 12; ++i) {
         if (currD[1]==months[i]){ break;}
     }
     k=0;
+    l=0;
     int dailyProd = quantity%sizeplant,capacity=sizeplant;
     while (k < daysNeed) {
-        if (currD[2]+k <= days[i]){
+        if (currD[2]+l <= days[i]){
             if (dailyProd != 0 && k == daysNeed-1){capacity=dailyProd;}
-            fprintf(fp,"%d-%d-%d %s %s %d %s\n",availDate[0],availDate[1],availDate[2],product_name,order_num,capacity,endD);
+            printf("%d-%02d-%02d %s %s %d %s\n",currD[0],currD[1],currD[2]+l,order_num,product_name,capacity,endD);
+            fprintf(fp,"%d-%02d-%02d %s %s %d %s\n",currD[0],currD[1],currD[2]+l,order_num,product_name,capacity,endD);
             k++;
+            l++;
         }else {
             currD[1] += 1; // go to next month
             currD[2] = 1;  // start from first day
+            l=0;
             i++;
         }
     }
+    currD[2]+=l;
     return currD;
 }
 void writeInvalid(char* product_name,char* order_num,char endD[3],int quantity){
-
+    FILE *fp = fopen("invalid.txt","ab+");
+    printf("%s %s %s %d\n",order_num,product_name,endD,quantity);
+    fprintf(fp, "%s %s %s %d\n", order_num, product_name, endD, quantity);
 }
 /*void schChild(int in_pipe[][2],int out_pipe[][2]) {
     close(in_pipe[0][1]);
@@ -183,7 +201,7 @@ void runPLS() {
     memcpy(availDate, startDate, sizeof(startDate));
 
     while (ord < numOrders) {
-        char **buf = getOrder(j, j + 4);
+        char **buf = getOrder(j, j + 4,0);
         int ordernum;
         sscanf(buf[2], "%d", &ordernum);
         int i, ordValid = 1;
@@ -191,6 +209,7 @@ void runPLS() {
             if (isDatevalid(buf[1], buf[2], availDate, i)) {
                 memcpy(availDate, writeSch(availDate, buf[0], buf[3], buf[1], ordernum, sizePlants[i]),
                        sizeof(availDate));
+                break;
             }
             ordValid = 0;
         }
@@ -337,17 +356,14 @@ void addPEIOD(char arr[]){
 
 void addORDER(char arr[]){
     FILE *fp = fopen("orders.txt","ab+");
-    if(fp == NULL)
-    {
-        printf("Error!");
-        exit(1);
-    }
+    if(fp == NULL){printf("Error!");exit(1);}
+    char delimit[]=" \n";
     strtok(arr, " ");
-    char * token = strtok(NULL, " ");
+    char * token = strtok(NULL, delimit);
     while(token != NULL){
         fprintf(fp,"%s ",token);
         fflush(fp);
-        token = strtok(NULL, " ");
+        token = strtok(NULL, delimit);
     }
     fclose(fp);
     numOrders++;
