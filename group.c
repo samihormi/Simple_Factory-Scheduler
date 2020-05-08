@@ -34,7 +34,7 @@ void writeDays(int begin[3], int end[3], int flag);
 int main(int argc,char *argv[]){
     //int n=totalday(2020,06,01,2020,07,30);
     char**ba=getOrder(0,4);
-    printf("%s",ba[0]);
+    printf("%s",ba[1]);
     char command[100];
     printf("~~WELCOME TO PLS~~\n\n");
     printf("Please enter:\n");
@@ -73,19 +73,20 @@ long totalday(int startDate1[3], int endDate1[3])
     return total1-total;
 }
 
-char **getOrder(int i, int limit){
+char ** getOrder(int i, int limit){
     char **buf = malloc(sizeof(char* )*4);
     for (int j = 0; j < 4; ++j) {
-        *(buf+j) = malloc(sizeof(char)*10);
+        buf[j] = malloc(sizeof(char)*10);
     }
-    char buff[10];
+//    strcpy(buf[0],"PArin");
+//    strcpy(buf[1],"Hiotra");
+    char buff[11];
     char* filename = "orders.txt";
     FILE *fp = fopen(filename ,"r");
     if(fp == NULL){printf("Error!");exit(1);}
-    while(fscanf(fp,"%s\n ",buff)){
+    while(fscanf(fp,"%s ",buff) != EOF){
         if (i == limit){ break;}
         strcpy(buf[i],buff);
-        printf("Buffer %s",buf[i]);
         i++;
     }
     fclose(fp);
