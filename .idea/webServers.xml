@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="99a5725f-3422-4c65-bdbd-f3e2c514e854" name="apollo" url="http://csdoor.comp.polyu.edu.hk">
+        <fileTransfer rootFolder="/home/18079976d" accessType="SFTP" host="csdoor.comp.polyu.edu.hk" port="22" sshConfigId="fe7d5431-cda5-49d3-ba0d-3b359c7b1031" sshConfig="apollo (8ffa5924-a744-42cf-9c48-00e90921a5bc)">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
