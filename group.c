@@ -28,14 +28,16 @@ void addORDER(char arr[]);
 void addBATCH(char arr[], int count);
 void printSchedule();
 void createChild();
-char **getOrder();
+char ** getOrder(int line_num);
 void writeDays(int begin[3], int end[3], int flag);
 void runPLS();
 bool isDatevalid(char date1[3],char *order1,int availDate[3],int plant);
+void flusharray(char **arr);
+
 int main(int argc,char *argv[]){
-    //int n=totalday(2020,06,01,2020,07,30);
-    char**ba=getOrder(0,4,1);
-    printf("%s",ba[1]);
+
+//    char**ba=getOrder(4);
+//    printf("%s",ba[1]);
     char command[100];
     printf("~~WELCOME TO PLS~~\n\n");
     printf("Please enter:\n");
@@ -75,14 +77,16 @@ long totalday(int startDate1[3], int endDate1[3])
     return total1-total;
 }
 
-char ** getOrder(int i, int limit,int line_num){
+void flusharray(char **arr){free(*arr);free(arr);}
+
+char ** getOrder(int line_num){
     char **buf = malloc(sizeof(char* )*4);
     for (int j = 0; j < 4; ++j) {
         buf[j] = malloc(sizeof(char)*10);
     }
 //    strcpy(buf[0],"PArin");
 //    strcpy(buf[1],"Hiotra");
-    int count = 0;
+    int count = 0,i=0;
     char buff[11],line[100],delimit[]=" \n";
     char* filename = "orders.txt";
     FILE *fp = fopen(filename ,"r");
@@ -91,7 +95,6 @@ char ** getOrder(int i, int limit,int line_num){
         if (count==line_num){
             char * token = strtok(line, delimit);
             while(token != NULL){
-                if (i == limit){ break;}
                 strcpy(buf[i++], token);
                 token = strtok(NULL, delimit);
             }
@@ -110,7 +113,8 @@ bool isDatevalid(char date1[3],char *order1,int availDate[3],int plant){
     int c1 = totalday(startDate,duedate);
     int c2 = totalday(duedate,endDate);
     int c3 = totalday(availDate,duedate);
-    if (c1 >= 0 && c2 >=0 && c3 >=0 && order/c3 >plant){
+    int capacity = order/c3;
+    if (c1 >= 0 && c2 >=0 && c3 >=0 && capacity <= plant){
         return true;
     } else {return false;}
 }
@@ -148,6 +152,7 @@ int* writeSch(int availDate[3],char* product_name,char* order_num,char endD[3],i
             i++;
         }
     }
+    printf("\n");
     currD[2]+=l;
     return currD;
 }
@@ -194,28 +199,27 @@ void writeInvalid(char* product_name,char* order_num,char endD[3],int quantity){
 
 void runPLS() {
     char deck[5][10];
-    int  flag = 0, ord = 0, j = 0;
-    int availDate[3], sizePlants[] = {300, 400, 600};
+    int  flag = 0, ord = 0, j = 0,i;
+    int availDate[3][3], sizePlants[] = {300, 400, 600};
 
-
-    memcpy(availDate, startDate, sizeof(startDate));
+    for (i = 0; i < 3 ; ++i) {memcpy(availDate[i], startDate, sizeof(startDate));}
 
     while (ord < numOrders) {
-        char **buf = getOrder(j, j + 4,0);
+        char **buf = getOrder(ord);
         int ordernum;
         sscanf(buf[2], "%d", &ordernum);
-        int i, ordValid = 1;
+        int ordValid = 1;
         for (i = 0; i < 3; ++i) {
-            if (isDatevalid(buf[1], buf[2], availDate, i)) {
-                memcpy(availDate, writeSch(availDate, buf[0], buf[3], buf[1], ordernum, sizePlants[i]),
-                       sizeof(availDate));
+            if (isDatevalid(buf[1], buf[2], availDate[i], sizePlants[i])) {
+                memcpy(availDate[i], writeSch(availDate[i], buf[0], buf[3], buf[1], ordernum, sizePlants[i]),sizeof(availDate));
+                ordValid = 1;
                 break;
             }
             ordValid = 0;
         }
         if (ordValid == 0) { writeInvalid(buf[0], buf[3], buf[1], ordernum); }
-        j += 4;
         ord++;
+        flusharray(buf);
     }
 
 }
