@@ -43,6 +43,8 @@ int main(int argc,char *argv[]){
 //    printf("%s",ba[1]);
     FILE *fp = fopen("orders.txt","w+");
     fclose(fp);
+    fp = fopen("invalid.txt","w+");
+    fclose(fp);
     char command[100];
     printf("~~WELCOME TO PLS~~\n\n");
     printf("Please enter:\n");
@@ -162,8 +164,8 @@ int* writeSch(int availDate[3],char* product_name,char* order_num,char endD[3],i
     return currD;
 }
 void writeInvalid(char* product_name,char* order_num,char endD[3],int quantity){
-    FILE *fp = fopen("invalid.txt","w+");
-    printf("%s %s %s %d\n",order_num,product_name,endD,quantity);
+    FILE *fp = fopen("invalid.txt","a");
+    //printf("%s %s %s %d\n",order_num,product_name,endD,quantity);
     fprintf(fp, "%s %s %s %d\n", order_num, product_name, endD, quantity);
 }
 void schChild(int in_pipe[][2],int out_pipe[][2]) {
