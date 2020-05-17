@@ -1,3 +1,6 @@
+// cc -lm group.c -o group
+// ./group
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -38,6 +41,8 @@ int main(int argc,char *argv[]){
 
 //    char**ba=getOrder(4);
 //    printf("%s",ba[1]);
+    FILE *fp = fopen("orders.txt","w+");
+    fclose(fp);
     char command[100];
     printf("~~WELCOME TO PLS~~\n\n");
     printf("Please enter:\n");
@@ -357,7 +362,7 @@ void addPEIOD(char arr[]){
 }
 
 void addORDER(char arr[]){
-    FILE *fp = fopen("orders.txt","w+");
+    FILE *fp = fopen("orders.txt","a");
     if(fp == NULL){printf("Error!");exit(1);}
     char delimit[]=" \n";
     strtok(arr, " ");
@@ -367,6 +372,7 @@ void addORDER(char arr[]){
         fflush(fp);
         token = strtok(NULL, delimit);
     }
+    fprintf(fp,"\n");
     fclose(fp);
     numOrders++;
     //printf("%s %s %d %s\n", schedule[numOrders].orderNum, schedule[numOrders].dueDate, schedule[numOrders].quantity, schedule[numOrders].productName);
