@@ -32,6 +32,8 @@ void addBATCH(char arr[], int count);
 void printSchedule();
 void createChild();
 char ** getOrder(int line_num);
+char ** getOrder_SJF(int arr[]);
+bool exist_SJF(int arr[],int line);
 void writeDays(int begin[3], int end[3], int flag);
 void runPLS();
 bool isDatevalid(char date1[3],char *order1,int availDate[3],int plant);
@@ -111,6 +113,60 @@ char ** getOrder(int line_num){
     fclose(fp);
     return buf;
 }
+
+char** getOrder_SJF(int arr[],int ord){
+    int count = 0,getmin = 0,line_num,save = 0;
+    char line[100];
+    char** buf = malloc(sizeof(char* )*4);
+    char** buff = malloc(sizeof(char* )*4);
+    char* filename = "orders.txt";
+    FILE *fp = fopen(filename ,"r");
+    if(fp == NULL){printf("Error!");exit(1);}
+    while (fgets(line,sizeof(line),fp)!=NULL){
+        char * token = strtok(line, delimit);
+        int i = 0;
+        while(token != NULL){
+                strcpy(buff[i++], token);
+                if(i==2){
+                    int left;
+                    left  = atoi(token);
+                    if(getmin==0){save = left}
+                    else if(left<save && exist_SJF(arr,getmin)){
+                        save = left;
+                        line_num = getmin;
+                    }
+                }
+                token = strtok(NULL, delimit);
+            }
+        getmin++;
+    }
+    arr[ord] = line_num;
+    while (fgets(line,sizeof(line),fp)!=NULL){
+        if (count==line_num){
+            char * token = strtok(line, delimit);
+            while(token != NULL){
+                strcpy(buf[i++], token);
+                token = strtok(NULL, delimit);
+            }
+            break;
+        }else{count++;}
+    }
+    fclose(fp);
+    return buf;
+}
+bool exist_SJF(int arr[],int line){
+    int i
+    i=0;
+    while (arr[i]==0){
+        if(arr[i]==line){
+            return false;
+            break;
+        }
+        i++;
+    }
+    return true;
+}
+
 bool isDatevalid(char date1[3],char *order1,int availDate[3],int plant){
     int duedate[3],order;
     sscanf( &date1[0], "%d", &duedate[0]);
@@ -199,6 +255,15 @@ void schChild(int in_pipe[][2],int out_pipe[][2]) {
             write(out_pipe[0][1],deck,sizeof(deck));
         }else if (strcmp(deck[0], "f") == 0) {
             break;
+        }
+        /*else if(strcmp(deck[0], "SJF") == 0){
+            int list[numOrders] = {0};
+            while(ord < numOrders){
+                char **buf = getOrder_SJF(list,ord);
+                
+                ord++;
+           } 
+        }*/
         }
     }
     close(in_pipe[0][0]);
