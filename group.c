@@ -125,12 +125,19 @@ bool isDatevalid(char date1[3],char *order1,int availDate[3],int plant){
         return true;
     } else {return false;}
 }
+void clearPlants(){
+    FILE *fp1 = fopen("PlantX.txt","w");
+    FILE *fp2 = fopen("PlantY.txt","w");
+    FILE *fp3 = fopen("PlantZ.txt","w");
+    FILE *fp4 = fopen("invalid.txt","w");
+    fclose(fp1);fclose(fp2);fclose(fp3);fclose(fp4);
+}
 
 int* writeSch(int availDate[3],char* product_name,char* order_num,char endD[3],int quantity,int sizeplant){
     FILE *fp;
-    if (sizeplant==300){fp = fopen("PlantX.txt","w+");
-    }else if (sizeplant==400){fp = fopen("PlantY.txt","w+");
-    }else{fp = fopen("PlantZ.txt","w+");}
+    if (sizeplant==300){fp = fopen("PlantX.txt","ab+");
+    }else if (sizeplant==400){fp = fopen("PlantY.txt","ab+");
+    }else{fp = fopen("PlantZ.txt","ab+");}
     int endDate1[3];
     int daysNeed = ceil((double)quantity/(double)sizeplant);
     sscanf(& endD[0], "%d", &endDate1[0]);
@@ -166,7 +173,7 @@ int* writeSch(int availDate[3],char* product_name,char* order_num,char endD[3],i
     return currD;
 }
 void writeInvalid(char* product_name,char* order_num,char endD[3],int quantity){
-    FILE *fp = fopen("invalid.txt","w+");
+    FILE *fp = fopen("invalid.txt","ab+");
     fprintf(fp, "INVALID %s %s %s %d\n", order_num, product_name, endD, quantity);
     printf("INVALID %s %s %s %d\n", order_num, product_name, endD, quantity);
     fclose(fp);
@@ -389,6 +396,7 @@ void runcmd(char command[],int count){
             else{
                 ptr=strstr(command,"runPLS FCFS");
                 if(ptr != NULL){
+                    clearPlants();
                     createChild(ppid,in_pipe,out_pipe);
                     strcpy(deck[0],"FCFS");
                     write(in_pipe[0][1],deck,sizeof(deck));
@@ -402,6 +410,7 @@ void runcmd(char command[],int count){
                 else{
                     ptr=strstr(command, "runPLS SJF");
                     if(ptr != NULL){
+                        clearPlants();
                         createChild(ppid,in_pipe,out_pipe);
                         strcpy(deck[0],"SJF");
                         write(in_pipe[0][1],deck,sizeof(deck));
