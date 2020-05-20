@@ -15,7 +15,7 @@ struct Schedule{
 };
 
 struct Schedule schedule[3];
-int startDate[3], endDate[3], numOrders = 5; //why 5???
+int startDate[3], endDate[3], numOrders = 6; //why 5???
 const int SIZE = 80;
 long numDays;
 
@@ -31,6 +31,7 @@ void createChild();
 char ** getOrder(int line_num, char* filename);
 void writeDays(int begin[3], int end[3], int flag);
 void runPLS();
+void runSJF();
 bool isDatevalid(char date1[3],char *order1,int availDate[3],int plant);
 void flusharray(char **arr);
 
@@ -39,12 +40,12 @@ int main(int argc,char *argv[]){
 //    char**ba=getOrder(4);
 //    printf("%s",ba[1]);
     char command[100];
-    FILE *fp = fopen("orders.txt","w");
-    fclose(fp);
-    fp = fopen("invalid.txt","w");
-    fclose(fp);
-    fp = fopen("temp.txt","w");
-    fclose(fp);
+//    FILE *fp = fopen("orders.txt","w");
+//    fclose(fp);
+//    fp = fopen("invalid.txt","w");
+//    fclose(fp);
+//    fp = fopen("temp.txt","w");
+//    fclose(fp);
 
     printf("~~WELCOME TO PLS~~\n\n");
     printf("Please enter:\n");
@@ -55,7 +56,7 @@ int main(int argc,char *argv[]){
         }
         if(strncmp(command, "-1", 2) != 0){
             runcmd(command,sizeof(command)/sizeof(int));
-            //runPLS();
+            //runSJF();
             strcpy(command, "-1");
             printf("Please enter:\n");
         }
@@ -148,7 +149,7 @@ int* writeSch(int availDate[3],char* product_name,char* order_num,char endD[3],i
     while (k < daysNeed) {
         if (currD[2]+l <= days[i]){
             if (dailyProd != 0 && k == daysNeed-1){capacity=dailyProd;}
-            //printf("%d-%02d-%02d %s %s %d %s %d\r\n",currD[0],currD[1],currD[2]+l,order_num,product_name,capacity,endD,sizeplant);
+            printf("%d-%02d-%02d %s %s %d %s %d\r\n",currD[0],currD[1],currD[2]+l,order_num,product_name,capacity,endD,sizeplant);
             fprintf(fp,"%d-%02d-%02d %s %s %d %s\r\n",currD[0],currD[1],currD[2]+l,order_num,product_name,capacity,endD);
             k++;
             l++;
@@ -166,7 +167,8 @@ int* writeSch(int availDate[3],char* product_name,char* order_num,char endD[3],i
 }
 void writeInvalid(char* product_name,char* order_num,char endD[3],int quantity){
     FILE *fp = fopen("invalid.txt","w+");
-    fprintf(fp, "%s %s %s %d\n", order_num, product_name, endD, quantity);
+    fprintf(fp, "INVALID %s %s %s %d\n", order_num, product_name, endD, quantity);
+    printf("INVALID %s %s %s %d\n", order_num, product_name, endD, quantity);
     fclose(fp);
 }
 void schChild(int in_pipe[][2],int out_pipe[][2]) {
@@ -176,12 +178,13 @@ void schChild(int in_pipe[][2],int out_pipe[][2]) {
     int n, totaldays=totalday(startDate,endDate),ord=0,ordTemp=0,j=0,i,x,y;
     int availDate[3][3], sizePlants[] = {300,400,600};
     for (i = 0; i < 3 ; ++i) {memcpy(availDate[i], startDate, sizeof(startDate));}
-    int num = numOrders - 5, arr[num][2];
+    int num = 6 , arr[num][2];
 
     while ((n = read(in_pipe[0][0], deck, sizeof(deck)) > 0)) {
-        if (strcmp(deck[0], "FCFS") == 0) {
+        if (strcmp(deck[0], "FCFS") == 0 || strcmp(deck[0], "SJF2") == 0) {
+            char *filename= (strcmp(deck[0],"FCFS")==0) ? "orders.txt":"temp.txt" ;
             while (ord < numOrders) {
-                char **buf = getOrder(ord, "orders.txt");
+                char **buf = getOrder(ord, filename);
                 int ordernum;
                 sscanf(buf[2], "%d", &ordernum);
                 int ordValid = 1;
@@ -200,7 +203,8 @@ void schChild(int in_pipe[][2],int out_pipe[][2]) {
             }
             strcpy(deck[0],"done");
             write(out_pipe[0][1],deck,sizeof(deck));
-        }else if(strcmp(deck[0], "SJF") == 0){
+        }
+        else if(strcmp(deck[0], "SJF") == 0){
             i = 0;
             while (ord < num){
                 char **buf = getOrder(ord, "orders.txt");
@@ -231,15 +235,15 @@ void schChild(int in_pipe[][2],int out_pipe[][2]) {
             fclose(fp1);
             fclose(fp2);
 
-            fp1 = fopen("orders.txt","w+");
+            fp1 = fopen("temp.txt","w+");
             fclose(fp1);
 
-            fp1 = fopen("orders.txt","a");
-            fp2 = fopen("temp.txt","r");
+            fp1 = fopen("temp.txt","a");
+            fp2 = fopen("orders.txt","r");
 
             ord = 0;
             while (ord < num){
-                char **buf = getOrder(arr[ord][1], "temp.txt");
+                char **buf = getOrder(arr[ord][1], "orders.txt");
                 for(i = 0; i < 4; i++){
                     fprintf(fp1,"%s ",buf[i]);
                     fflush(fp1);
@@ -250,27 +254,8 @@ void schChild(int in_pipe[][2],int out_pipe[][2]) {
             }
             fclose(fp1);
             fclose(fp2);
-
-            ord = 0;
-            while (ord < numOrders) {
-                char **buf = getOrder(ord, "orders.txt");
-                int ordernum;
-                sscanf(buf[2], "%d", &ordernum);
-                int ordValid = 1;
-                for (i = 0; i < 3; ++i) {
-                    if (isDatevalid(buf[1], buf[2], availDate[i], sizePlants[i])) {
-                        memcpy(availDate[i], writeSch(availDate[i], buf[0], buf[3], buf[1], ordernum, sizePlants[i]),
-                               sizeof(availDate));
-                        ordValid = 1;
-                        break;
-                    }
-                    ordValid = 0;
-                }
-                if (ordValid == 0) { writeInvalid(buf[0], buf[3], buf[1], ordernum); }
-                ord++;
-                flusharray(buf);
-            }
-            strcpy(deck[0],"done");
+            ord=0;
+            strcpy(deck[0],"SJF");
             write(out_pipe[0][1],deck,sizeof(deck));
         }
         else if (strcmp(deck[0], "f") == 0) {
@@ -308,6 +293,61 @@ void runPLS() {
     }
 
 }
+void runSJF(){
+    int i = 0,j,x,y,ord=0, num = 6,arr[num][2];
+    char ch;
+    while (ord < num){
+        char **buf = getOrder(ord, "orders.txt");
+        sscanf(buf[2], "%d", &arr[i][0]);
+        arr[i][1] = i;
+        i++;
+        ord++;
+        flusharray(buf);
+    }
+    for(i=0; i<num-1; i++){
+        for(j=i+1; j<num; j++){
+            if(arr[i][0] > arr[j][0]){
+                x = arr[i][0];
+                y = arr[i][1];
+                arr[i][0] = arr[j][0];
+                arr[i][1] = arr[j][1];
+                arr[j][0] = x;
+                arr[j][1] = y;
+            }
+        }
+    }
+
+    FILE *fp1 = fopen("orders.txt","r");
+    FILE *fp2 = fopen("temp.txt","w+");
+    while((ch = fgetc(fp1)) != EOF){
+        fputc(ch, fp2);
+    }
+    fclose(fp1);
+    fclose(fp2);
+
+    fp1 = fopen("temp.txt","w+");
+    fclose(fp1);
+
+    fp1 = fopen("temp.txt","a");
+    fp2 = fopen("orders.txt","r");
+
+    ord = 0;
+    while (ord < num){
+        char **buf = getOrder(arr[ord][1], "orders.txt");
+        for(i = 0; i < 4; i++){
+            fprintf(fp1,"%s ",buf[i]);
+            fflush(fp1);
+        }
+        fprintf(fp1,"\n");
+        ord++;
+        flusharray(buf);
+    }
+    fclose(fp1);
+    fclose(fp2);
+
+    runPLS();
+}
+
 void createChild(int ppid, int in_pipe[][2],int out_pipe[][2]){
     if ((pipe(in_pipe[0]) < 0) || (pipe(out_pipe[0]) < 0)) {
         printf("Pipe creation error\r\n");
@@ -355,6 +395,7 @@ void runcmd(char command[],int count){
                     read(out_pipe[0][0],deck,sizeof(deck));
                     strcpy(deck[0],"f");
                     write(in_pipe[0][1],deck,sizeof(deck));
+                    read(out_pipe[0][0],deck,sizeof(deck));
                     //runPLS(ptr,count);
                     //printf("runPLS");
                 }
@@ -365,8 +406,12 @@ void runcmd(char command[],int count){
                         strcpy(deck[0],"SJF");
                         write(in_pipe[0][1],deck,sizeof(deck));
                         read(out_pipe[0][0],deck,sizeof(deck));
+                        strcpy(deck[0],"SJF2");
+                        write(in_pipe[0][1],deck,sizeof(deck));
+                        read(out_pipe[0][0],deck,sizeof(deck));
                         strcpy(deck[0],"f");
                         write(in_pipe[0][1],deck,sizeof(deck));
+                        read(out_pipe[0][0],deck,sizeof(deck));
                     }
                     else{
                         printf("exit");
