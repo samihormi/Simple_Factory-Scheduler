@@ -57,6 +57,7 @@ int main(int argc,char *argv[]){
         if(strncmp(command, "-1", 2) != 0){
             runcmd(command,sizeof(command)/sizeof(int));
             //runSJF();
+            runPLS();
             strcpy(command, "-1");
             printf("Please enter:\n");
         }
@@ -121,7 +122,7 @@ bool isDatevalid(char date1[3],char *order1,int availDate[3],int plant){
     int c2 = totalday(duedate,endDate);
     int c3 = totalday(availDate,duedate);
     int capacity = ceil((double)order/(double)c3);
-    if (c1 >= 0 && c2 >=0 && c3 >=0 && capacity <= plant){
+    if (c1 >= 0 && c2 >=0 && c3 > 0 && capacity <= plant){
         return true;
     } else {return false;}
 }
