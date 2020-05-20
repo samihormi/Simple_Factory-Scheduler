@@ -93,6 +93,7 @@ char ** getOrder(int line_num, char* filename){
     }
 //    strcpy(buf[0],"Parin");
 //    strcpy(buf[1],"Hiotra");
+//    printf("%s",buf[1]);
     int count = 0,i=0;
     char buff[11],line[100],delimit[]=" \n";
     FILE *fp = fopen(filename ,"r");
@@ -349,14 +350,14 @@ void runcmd(char command[],int count){
             else{
                 ptr=strstr(command,"runPLS FCFS");
                 if(ptr != NULL){
-                    createChild(ppid,in_pipe,out_pipe);
-                    strcpy(deck[0],"FCFS");
-                    write(in_pipe[0][1],deck,sizeof(deck));
-                    read(out_pipe[0][0],deck,sizeof(deck));
-                    strcpy(deck[0],"f");
-                    write(in_pipe[0][1],deck,sizeof(deck));
-                    //runPLS(ptr,count);
-                    //printf("runPLS");
+//                    createChild(ppid,in_pipe,out_pipe);
+//                    strcpy(deck[0],"FCFS");
+//                    write(in_pipe[0][1],deck,sizeof(deck));
+//                    read(out_pipe[0][0],deck,sizeof(deck));
+//                    strcpy(deck[0],"f");
+//                    write(in_pipe[0][1],deck,sizeof(deck));
+                    runPLS(ptr,count);
+                    printf("runPLS");
                 }
                 else{
                     ptr=strstr(command, "runPLS SJF");
