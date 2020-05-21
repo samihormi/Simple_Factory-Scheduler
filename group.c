@@ -34,6 +34,7 @@ void runPLS();
 void runSJF();
 bool isDatevalid(char date1[3],char *order1,int availDate[3],int plant);
 void flusharray(char **arr);
+void writeValid(char* order_num,int startD[3], int endD[3], int days, int quantity, char *plantName);
 
 int main(int argc,char *argv[]){
 
@@ -57,7 +58,7 @@ int main(int argc,char *argv[]){
         if(strncmp(command, "-1", 2) != 0){
             runcmd(command,sizeof(command)/sizeof(int));
             //runSJF();
-            runPLS();
+           // runPLS();
             strcpy(command, "-1");
             printf("Please enter:\n");
         }
@@ -84,9 +85,7 @@ long totalday(int startDate1[3], int endDate1[3])
     total1 += endDate1[2];
     return total1-total;
 }
-
 void flusharray(char **arr){free(*arr);free(arr);}
-
 char ** getOrder(int line_num, char* filename){
     char **buf = malloc(sizeof(char* )*4);
     int j;
@@ -96,7 +95,7 @@ char ** getOrder(int line_num, char* filename){
 //    strcpy(buf[0],"Parin");
 //    strcpy(buf[1],"Hiotra");
     int count = 0,i=0;
-    char buff[11],line[100],delimit[]=" \n";
+    char line[100],delimit[]=" \n";
     FILE *fp = fopen(filename ,"r");
     if(fp == NULL){printf("Error!");exit(1);}
     while (fgets(line,sizeof(line),fp)!=NULL){
@@ -131,22 +130,105 @@ void clearPlants(){
     FILE *fp2 = fopen("PlantY.txt","w");
     FILE *fp3 = fopen("PlantZ.txt","w");
     FILE *fp4 = fopen("invalid.txt","w");
-    fclose(fp1);fclose(fp2);fclose(fp3);fclose(fp4);
+    FILE *fp5 = fopen("valid.txt","w");
+    fclose(fp1);fclose(fp2);fclose(fp3);fclose(fp4);fclose(fp5);
 }
-
-int* writeSch(int availDate[3],char* product_name,char* order_num,char endD[3],int quantity,int sizeplant){
+int* dateFormater(char date[3]){
+    int intDate[3];
+    sscanf(& date[0], "%d", &intDate[0]);
+    sscanf(& date[5], "%d", &intDate[1]);
+    sscanf(& date[8], "%d", &intDate[2]);
+    return intDate;
+}
+void counterVariables(int accepRejec[2],int usagePlants[3],int prodPlants[3] ){
+    FILE *fp = fopen("valid.txt","r");if(fp == NULL){printf("Error!");exit(1);}
+    int prod_index=0;
+    char line[100],delimit[]=" \n";
+    while (fgets(line,sizeof(line),fp)!=NULL){
+        accepRejec[0]++;
+        if (strstr(line,"Plant_X")){
+            char * token = strtok(line, delimit);
+            while(prod_index < 5){
+                if (prod_index==3){
+                    usagePlants[0]+= atoi(token);
+                } else if (prod_index==4){
+                    prodPlants[0]+= atoi(token);
+                }
+                token = strtok(NULL, delimit);
+                prod_index++;
+            }
+            prod_index=0;
+        }
+        else if (strstr(line,"Plant_Y")){
+            char * token = strtok(line, delimit);
+            while(prod_index < 5){
+                if (prod_index==3){
+                    usagePlants[1]+= atoi(token);
+                } else if (prod_index==4){
+                    prodPlants[1]+= atoi(token);
+                }
+                token = strtok(NULL, delimit);
+                prod_index++;
+            }
+            prod_index=0;
+        }
+        else if (strstr(line,"Plant_Z")){
+            char * token = strtok(line, delimit);
+            while(prod_index < 5){
+                if (prod_index==3){
+                    usagePlants[2]+= atoi(token);
+                } else if (prod_index==4){
+                    prodPlants[2]+= atoi(token);
+                }
+                token = strtok(NULL, delimit);
+                prod_index++;
+            }
+            prod_index=0;
+        }
+    }
+    fclose(fp);
+    fp = fopen("invalid.txt","r");if(fp == NULL){printf("Error!");exit(1);}
+    while (fgets(line,sizeof(line),fp)!=NULL) {
+        accepRejec[1]++;
+    }
+}
+void reportGenerator(int accepRejec[2],int usagePlants[3],int prodPlants[3],char* algoUsed,char* outputFile ){
+    double utilPlants[3]={300,400,600};
+    int i;
+    for (i = 0; i < 3 ; ++i) {
+        utilPlants[i]= (float)prodPlants[i]/(float)totalday(startDate,endDate)*utilPlants[i];
+    }
+    FILE *fp = fopen(outputFile,"w");
+    fprintf(fp,"***PLS Schedule Analysis Report***\n\nAlgorithm used: %s\n\nThere are %d Orders ACCEPTED. Details are as follows:\n\n",algoUsed,accepRejec[0]);
+    fprintf(fp,"ORDER NUMBER\tSTART\t\tEND\t\tDAYS\tQUANTITY\tPLANT\n===========================================================================\n");
+    FILE *fp1 = fopen("valid.txt","r");
+    char c=fgetc(fp1);
+    while (c !=EOF){printf ("%c", c);c = fgetc(fp1); }fclose(fp1);
+    fprintf(fp,"\t\t\t\tEND\n\n===========================================================================\n\n\n");
+    fprintf(fp,"There are %d Orders REJECTED. Details are as follows:\n\n",accepRejec[1]);
+    fprintf(fp,"ORDER NUMBER\tSTART\t\tEND\t\tDAYS\tQUANTITY\tPLANT\n===========================================================================\n");
+    fp1 =fopen("invalid.txt","r");c=fgetc(fp1);
+    while (c !=EOF){printf ("%c", c);c = fgetc(fp1); }fclose(fp1);
+    fprintf(fp,"\t\t\t\tEND\n\n===========================================================================\n\n\n");
+    fprintf(fp,"***PERFORMANCE\n\nPlant_X:\n\t\tNumber of days in use:\t\t %d days\nNumber of products produced:\t\t %d (in total)\nUtilization of the plant:\t\t %.2f %%\n\n",usagePlants[0],prodPlants[0],utilPlants[0]);
+    fprintf(fp,"Plant_Y:\n\t\tNumber of days in use:\t\t %d days\nNumber of products produced:\t\t %d (in total)\nUtilization of the plant:\t\t %.2f %%\n\n",usagePlants[1],prodPlants[1],utilPlants[1]);
+    fprintf(fp,"Plant_Z:\n\t\tNumber of days in use:\t\t %d days\nNumber of products produced:\t\t %d (in total)\nUtilization of the plant:\t\t %.2f %%\n\n",usagePlants[2],prodPlants[2],utilPlants[2]);
+    fprintf(fp,"Overall of utilization %.2f",(utilPlants[0]+utilPlants[1]+utilPlants[2])/3);
+    fclose(fp);
+    fp = fopen(outputFile,"r");
+    c = fgetc(fp);
+    while (c !=EOF){printf ("%c", c);c = fgetc(fp); }fclose(fp);
+}
+int* writeSch(int availDate[3],char* order_num,char* product_name,char endD[3],int quantity,int sizeplant){
     FILE *fp;
-    if (sizeplant==300){fp = fopen("PlantX.txt","ab+");
-    }else if (sizeplant==400){fp = fopen("PlantY.txt","ab+");
-    }else{fp = fopen("PlantZ.txt","ab+");}
-    int endDate1[3];
+    char* plantName;
+    if (sizeplant==300){plantName="Plant_X";fp = fopen("PlantX.txt","ab+");
+    }else if (sizeplant==400){plantName="Plant_Y";fp = fopen("PlantY.txt","ab+");
+    }else{plantName="Plant_Z";fp = fopen("PlantZ.txt","ab+");}
     int daysNeed = ceil((double)quantity/(double)sizeplant);
-    sscanf(& endD[0], "%d", &endDate1[0]);
-    sscanf(& endD[5], "%d", &endDate1[1]);
-    sscanf(& endD[8], "%d", &endDate1[2]);
     int months[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
     int days[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-    int *currD = availDate;
+    int *currD = availDate,initD[3];memcpy(initD,availDate,sizeof(initD));
     int i,j=0,k,l;
     for ( i = 0; i < 12; ++i) {
         if (currD[1]==months[i]){ break;}
@@ -157,8 +239,8 @@ int* writeSch(int availDate[3],char* product_name,char* order_num,char endD[3],i
     while (k < daysNeed) {
         if (currD[2]+l <= days[i]){
             if (dailyProd != 0 && k == daysNeed-1){capacity=dailyProd;}
-            printf("%d-%02d-%02d %s %s %d %s %d\r\n",currD[0],currD[1],currD[2]+l,order_num,product_name,capacity,endD,sizeplant);
-            fprintf(fp,"%d-%02d-%02d %s %s %d %s\r\n",currD[0],currD[1],currD[2]+l,order_num,product_name,capacity,endD);
+            printf("%d-%02d-%02d %s %s %d %s %d\r\n",currD[0],currD[1],currD[2]+l,product_name,order_num,capacity,endD,sizeplant);
+            fprintf(fp,"%d-%02d-%02d %s %s %d %s\r\n",currD[0],currD[1],currD[2]+l,product_name,order_num,capacity,endD);
             k++;
             l++;
         }else {
@@ -169,14 +251,22 @@ int* writeSch(int availDate[3],char* product_name,char* order_num,char endD[3],i
         }
     }
     printf("\n");
-    currD[2]+=l;
+    currD[2]+=l-1;
     fclose(fp);
+    writeValid(order_num,initD,currD,l,quantity,plantName);
+    currD[2]++;
     return currD;
 }
-void writeInvalid(char* product_name,char* order_num,char endD[3],int quantity){
+void writeInvalid(char* order_num,char* product_name,char endD[3],int quantity){
     FILE *fp = fopen("invalid.txt","ab+");
-    fprintf(fp, "INVALID %s %s %s %d\n", order_num, product_name, endD, quantity);
+    fprintf(fp, "%s %s %s %d\n", order_num, product_name, endD, quantity);
     printf("INVALID %s %s %s %d\n", order_num, product_name, endD, quantity);
+    fclose(fp);
+}
+void writeValid(char* order_num,int startD[3], int endD[3], int days, int quantity, char *plantName){
+    FILE *fp = fopen("valid.txt","ab+");
+    fprintf(fp, "%s %d-%02d-%02d %d-%02d-%02d %d %d %s \n", order_num, startD[0],startD[1],startD[2], endD[0],endD[1],endD[2], days, quantity,plantName);
+    printf("VALID %s %d-%02d-%02d %d-%02d-%02d %d %d %s \n", order_num, startD[0],startD[1],startD[2], endD[0],endD[1],endD[2], days, quantity,plantName);
     fclose(fp);
 }
 void schChild(int in_pipe[][2],int out_pipe[][2]) {
@@ -198,18 +288,18 @@ void schChild(int in_pipe[][2],int out_pipe[][2]) {
                 int ordValid = 1;
                 for (i = 0; i < 3; ++i) {
                     if (isDatevalid(buf[1], buf[2], availDate[i], sizePlants[i])) {
-                        memcpy(availDate[i], writeSch(availDate[i], buf[0], buf[3], buf[1], ordernum, sizePlants[i]),
+                        memcpy(availDate[i], writeSch(availDate[i], buf[3], buf[0], buf[1], ordernum, sizePlants[i]),
                                sizeof(availDate));
                         ordValid = 1;
                         break;
                     }
                     ordValid = 0;
                 }
-                if (ordValid == 0) { writeInvalid(buf[0], buf[3], buf[1], ordernum); }
+                if (ordValid == 0) { writeInvalid(buf[3], buf[0], buf[1], ordernum); }
                 ord++;
                 flusharray(buf);
             }
-            strcpy(deck[0],"done");
+            strcpy(deck[0],"doneR");
             write(out_pipe[0][1],deck,sizeof(deck));
         }
         else if(strcmp(deck[0], "SJF") == 0){
@@ -266,6 +356,13 @@ void schChild(int in_pipe[][2],int out_pipe[][2]) {
             strcpy(deck[0],"SJF");
             write(out_pipe[0][1],deck,sizeof(deck));
         }
+        else if (strcmp(deck[0], "REPO") == 0) {
+            int accepRejec[2]={0,0},usagePlants[3]={0,0,0},prodPlants[3]={0,0,0};
+            counterVariables(accepRejec,usagePlants,prodPlants);
+            reportGenerator(accepRejec,usagePlants,prodPlants,deck[1],deck[2]);
+            strcpy(deck[0],"done");
+            write(out_pipe[0][1],deck,sizeof(deck));
+        }
         else if (strcmp(deck[0], "f") == 0) {
             break;
         }
@@ -276,6 +373,7 @@ void schChild(int in_pipe[][2],int out_pipe[][2]) {
 }
 
 void runPLS() {
+    clearPlants();
     char deck[5][10];
     int  flag = 0, ord = 0, j = 0,i;
     int availDate[3][3], sizePlants[] = {300, 400, 600};
@@ -295,10 +393,12 @@ void runPLS() {
             }
             ordValid = 0;
         }
-        if (ordValid == 0) { writeInvalid(buf[0], buf[3], buf[1], ordernum); }
+        if (ordValid == 0) { writeInvalid( buf[0],buf[3], buf[1], ordernum); }
         ord++;
         flusharray(buf);
     }
+    int accepRejec[2]={0,0},usagePlants[3]={0,0,0},prodPlants[3]={0,0,0};
+    counterVariables(accepRejec,usagePlants,prodPlants);
 
 }
 void runSJF(){
@@ -375,60 +475,56 @@ void createChild(int ppid, int in_pipe[][2],int out_pipe[][2]){
         close(out_pipe[0][1]);
     }
 }
-void runcmd(char command[],int count){
+void runcmd(char command[],int count) {
     int ppid = getpid();
-    int in_pipe[1][2];
-    int out_pipe[1][2];
-    char deck[5][10];
-    char *ptr = strstr(command,"addPEIOD");
-    if(ptr != NULL){
-        addPEIOD(command);
-    }
-    else{
-        ptr=strstr(command,"addORDER");
-        if(ptr != NULL){
-            addORDER(command); //count
-        }
-        else{
-            ptr=strstr(command,"addBATCH");
-            if(ptr != NULL){
-                addBATCH(command, count);
-            }
-            else{
-                ptr=strstr(command,"runPLS FCFS");
-                if(ptr != NULL){
-                    clearPlants();
-                    createChild(ppid,in_pipe,out_pipe);
-                    strcpy(deck[0],"FCFS");
-                    write(in_pipe[0][1],deck,sizeof(deck));
-                    read(out_pipe[0][0],deck,sizeof(deck));
-                    strcpy(deck[0],"f");
-                    write(in_pipe[0][1],deck,sizeof(deck));
-                    read(out_pipe[0][0],deck,sizeof(deck));
-                    //runPLS(ptr,count);
-                    //printf("runPLS");
-                }
-                else{
-                    ptr=strstr(command, "runPLS SJF");
-                    if(ptr != NULL){
-                        clearPlants();
-                        createChild(ppid,in_pipe,out_pipe);
-                        strcpy(deck[0],"SJF");
-                        write(in_pipe[0][1],deck,sizeof(deck));
-                        read(out_pipe[0][0],deck,sizeof(deck));
-                        strcpy(deck[0],"SJF2");
-                        write(in_pipe[0][1],deck,sizeof(deck));
-                        read(out_pipe[0][0],deck,sizeof(deck));
-                        strcpy(deck[0],"f");
-                        write(in_pipe[0][1],deck,sizeof(deck));
-                        read(out_pipe[0][0],deck,sizeof(deck));
-                    }
-                    else{
-                        printf("exit");
-                    }
-                }
+    int in_pipe[1][2]; int out_pipe[1][2];
+    char deck[5][10];char *algoUsed;
 
+    if (strstr(command, "addPEIOD") != NULL) {
+        addPEIOD(command);
+    } else if (strstr(command, "addPEIOD") != NULL) {
+        addORDER(command);
+    } else if (strstr(command, "addBATCH") != NULL) {
+        addBATCH(command, count);
+    } else if (strstr(command, "runPLS") != NULL) {
+        if (strstr(command, "FCFS") != NULL) {
+            algoUsed="FCFS";
+            clearPlants();
+            createChild(ppid, in_pipe, out_pipe);
+            strcpy(deck[0], "FCFS");
+            write(in_pipe[0][1], deck, sizeof(deck));
+            read(out_pipe[0][0], deck, sizeof(deck));
+            strcpy(deck[0], "f");
+            write(in_pipe[0][1], deck, sizeof(deck));
+            read(out_pipe[0][0], deck, sizeof(deck));
+            //runPLS(ptr,count);
+            //printf("runPLS");
+        } else if (strstr(command, "SJF") != NULL) {
+            algoUsed="SJF";
+            clearPlants();
+            createChild(ppid, in_pipe, out_pipe);
+            strcpy(deck[0], "SJF");
+            write(in_pipe[0][1], deck, sizeof(deck));
+            read(out_pipe[0][0], deck, sizeof(deck));
+            strcpy(deck[0], "SJF2");
+            write(in_pipe[0][1], deck, sizeof(deck));
+            read(out_pipe[0][0], deck, sizeof(deck));
+            strcpy(deck[0], "f");
+            write(in_pipe[0][1], deck, sizeof(deck));
+            read(out_pipe[0][0], deck, sizeof(deck));
+        }
+        if (strstr(command, "printREPORT") != NULL) {
+            int i = 0;
+            char *token = strtok(command, " ");
+            while (i != 5) {
+                i++;
+                token = strtok(NULL, " ");
             }
+            strcpy(deck[0], "REPO");
+            strcpy(deck[1], algoUsed);
+            strcpy(deck[2], token);
+            write(in_pipe[0][1], deck, sizeof(deck));
+            read(out_pipe[0][0], deck, sizeof(deck));
         }
     }
 }
@@ -485,7 +581,6 @@ void writeDays(int begin[3], int end[3], int flag) {
     fclose(pz);
 
 }
-
 void addPEIOD(char arr[]){
     int i=0;
     char input[3][SIZE];
@@ -504,7 +599,6 @@ void addPEIOD(char arr[]){
     addDate(input, 2, 8, 10, false);
     numDays = totalday(startDate, endDate);
 }
-
 void addORDER(char arr[]){
     FILE *fp = fopen("orders.txt","a");
     if(fp == NULL){printf("Error!\n");exit(1);}
@@ -521,7 +615,6 @@ void addORDER(char arr[]){
     numOrders++;
     //printf("%s %s %d %s\n", schedule[numOrders].orderNum, schedule[numOrders].dueDate, schedule[numOrders].quantity, schedule[numOrders].productName);
 }
-
 void addBATCH(char arr[], int count){
     int i;
     char a[100], buf[150], line[100] = "";
@@ -542,7 +635,6 @@ void addBATCH(char arr[], int count){
     }
     fclose(fp);
 }
-
 void printSchedule(){
     char curDate[20], product[20], order[20], quantity[20], dueDate[20];
     int i;
