@@ -1,1 +1,1 @@
-INVALID Product_F P0006 2020-06-10 40000
+Product_F       P0006           2020-06-10      1000000

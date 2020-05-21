@@ -1,0 +1,5 @@
+Product_A        2020-06-01		2020-06-03	  3        800      Plant_X 
+Product_B        2020-06-04		2020-06-03	  0        0        Plant_X 
+Product_C        2020-06-04		2020-06-03	  0        0        Plant_X 
+Product_D        2020-06-01		2020-06-08	  8        3000     Plant_Y 
+Product_E        2020-06-04		2020-06-09	  6        1800     Plant_X 

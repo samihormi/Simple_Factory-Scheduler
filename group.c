@@ -32,6 +32,7 @@ char ** getOrder(int line_num, char* filename);
 void writeDays(int begin[3], int end[3], int flag);
 void runPLS();
 void runSJF();
+void runANA();
 bool isDatevalid(char date1[3],char *order1,int availDate[3],int plant);
 void flusharray(char **arr);
 void writeValid(char* order_num,int startD[3], int endD[3], int days, int quantity, char *plantName);
@@ -58,7 +59,8 @@ int main(int argc,char *argv[]){
         if(strncmp(command, "-1", 2) != 0){
             runcmd(command,sizeof(command)/sizeof(int));
             //runSJF();
-           // runPLS();
+           //runPLS();
+           //runANA();
             strcpy(command, "-1");
             printf("Please enter:\n");
         }
@@ -143,7 +145,7 @@ int* dateFormater(char date[3]){
 void counterVariables(int accepRejec[2],int usagePlants[3],int prodPlants[3] ){
     FILE *fp = fopen("valid.txt","r");if(fp == NULL){printf("Error!");exit(1);}
     int prod_index=0;
-    char line[100],delimit[]=" \n";
+    char line[100],delimit[]=" \n\t";
     while (fgets(line,sizeof(line),fp)!=NULL){
         accepRejec[0]++;
         if (strstr(line,"Plant_X")){
@@ -196,24 +198,26 @@ void reportGenerator(int accepRejec[2],int usagePlants[3],int prodPlants[3],char
     double utilPlants[3]={300,400,600};
     int i;
     for (i = 0; i < 3 ; ++i) {
-        utilPlants[i]= (float)prodPlants[i]/(float)totalday(startDate,endDate)*utilPlants[i];
+        utilPlants[i]= (float)prodPlants[i]/(float)(totalday(startDate,endDate)*utilPlants[i]);
     }
-    FILE *fp = fopen(outputFile,"w");
-    fprintf(fp,"***PLS Schedule Analysis Report***\n\nAlgorithm used: %s\n\nThere are %d Orders ACCEPTED. Details are as follows:\n\n",algoUsed,accepRejec[0]);
-    fprintf(fp,"ORDER NUMBER\tSTART\t\tEND\t\tDAYS\tQUANTITY\tPLANT\n===========================================================================\n");
+    FILE *fp = fopen(outputFile,"w+");
+    fprintf(fp,"***PLS Schedule Analysis Report***\r\n\r\nAlgorithm used: %s\r\n\r\nThere are %d Orders ACCEPTED. Details are as follows:\r\n\r\n",algoUsed,accepRejec[0]);
+    fprintf(fp,"ORDER NUMBER\t START\t\t\tEND\t\t\tDAYS\tQUANTITY\tPLANT\r\n===========================================================================\r\n");
+
     FILE *fp1 = fopen("valid.txt","r");
     char c=fgetc(fp1);
-    while (c !=EOF){printf ("%c", c);c = fgetc(fp1); }fclose(fp1);
-    fprintf(fp,"\t\t\t\tEND\n\n===========================================================================\n\n\n");
-    fprintf(fp,"There are %d Orders REJECTED. Details are as follows:\n\n",accepRejec[1]);
-    fprintf(fp,"ORDER NUMBER\tSTART\t\tEND\t\tDAYS\tQUANTITY\tPLANT\n===========================================================================\n");
-    fp1 =fopen("invalid.txt","r");c=fgetc(fp1);
-    while (c !=EOF){printf ("%c", c);c = fgetc(fp1); }fclose(fp1);
-    fprintf(fp,"\t\t\t\tEND\n\n===========================================================================\n\n\n");
-    fprintf(fp,"***PERFORMANCE\n\nPlant_X:\n\t\tNumber of days in use:\t\t %d days\nNumber of products produced:\t\t %d (in total)\nUtilization of the plant:\t\t %.2f %%\n\n",usagePlants[0],prodPlants[0],utilPlants[0]);
-    fprintf(fp,"Plant_Y:\n\t\tNumber of days in use:\t\t %d days\nNumber of products produced:\t\t %d (in total)\nUtilization of the plant:\t\t %.2f %%\n\n",usagePlants[1],prodPlants[1],utilPlants[1]);
-    fprintf(fp,"Plant_Z:\n\t\tNumber of days in use:\t\t %d days\nNumber of products produced:\t\t %d (in total)\nUtilization of the plant:\t\t %.2f %%\n\n",usagePlants[2],prodPlants[2],utilPlants[2]);
-    fprintf(fp,"Overall of utilization %.2f",(utilPlants[0]+utilPlants[1]+utilPlants[2])/3);
+    while (c !=EOF){fprintf (fp,"%c", c);c = fgetc(fp1); }fclose(fp1);
+    fprintf(fp,"\t\t\t\t\t\t\t- End -\r\n\r\n===========================================================================\r\n\r\n\r\n");
+    fprintf(fp,"There are %d Orders REJECTED. Details are as follows:\r\n\r\n",accepRejec[1]);
+    fprintf(fp,"ORDER NUMBER\tPRODUCT NAME\tDue Date\t\tQUANTITY\r\n===========================================================================\r\n");
+    fp1 = fopen("invalid.txt","r");c=fgetc(fp1);
+    while (c !=EOF){fprintf (fp,"%c", c);c = fgetc(fp1); }fclose(fp1);
+    fprintf(fp,"\t\t\t\t\t\t\t- End -\r\n\r\n===========================================================================\r\n\r\n\r\n");
+    fprintf(fp,"***PERFORMANCE\r\n\r\n");
+    fprintf(fp,"Plant_X:\r\n\t\tNumber of days in use:\t\t %d days\r\n\t\tNumber of products produced:\t%d (in total)\r\n\t\tUtilization of the plant:\t\t%.2f %%\r\n\r\n",usagePlants[0],prodPlants[0],utilPlants[0]);
+    fprintf(fp,"Plant_Y:\r\n\t\tNumber of days in use:\t\t %d days\r\n\t\tNumber of products produced:\t%d (in total)\r\n\t\tUtilization of the plant:\t\t%.2f %%\r\n\r\n",usagePlants[1],prodPlants[1],utilPlants[1]);
+    fprintf(fp,"Plant_Z:\r\n\t\tNumber of days in use:\t\t %d days\r\n\t\tNumber of products produced:\t%d (in total)\r\n\t\tUtilization of the plant:\t\t%.2f %%\r\n\r\n",usagePlants[2],prodPlants[2],utilPlants[2]);
+    fprintf(fp,"Overall of utilization %.2f %%\r\n\r\n",(utilPlants[0]+utilPlants[1]+utilPlants[2])/3);
     fclose(fp);
     fp = fopen(outputFile,"r");
     c = fgetc(fp);
@@ -259,20 +263,20 @@ int* writeSch(int availDate[3],char* order_num,char* product_name,char endD[3],i
 }
 void writeInvalid(char* order_num,char* product_name,char endD[3],int quantity){
     FILE *fp = fopen("invalid.txt","ab+");
-    fprintf(fp, "%s %s %s %d\n", order_num, product_name, endD, quantity);
-    printf("INVALID %s %s %s %d\n", order_num, product_name, endD, quantity);
+    fprintf(fp, "%-16s%-16s%-16s%d\n", order_num, product_name, endD, quantity);
+    //printf("INVALID %-16s%-16s%-16s%d\n", order_num, product_name, endD, quantity);
     fclose(fp);
 }
 void writeValid(char* order_num,int startD[3], int endD[3], int days, int quantity, char *plantName){
     FILE *fp = fopen("valid.txt","ab+");
-    fprintf(fp, "%s %d-%02d-%02d %d-%02d-%02d %d %d %s \n", order_num, startD[0],startD[1],startD[2], endD[0],endD[1],endD[2], days, quantity,plantName);
-    printf("VALID %s %d-%02d-%02d %d-%02d-%02d %d %d %s \n", order_num, startD[0],startD[1],startD[2], endD[0],endD[1],endD[2], days, quantity,plantName);
+    fprintf(fp, "%-16s %d-%02d-%02d\t\t%d-%02d-%02d\t  %-8d %-8d %s \n", order_num, startD[0],startD[1],startD[2], endD[0],endD[1],endD[2], days, quantity,plantName);
+//    printf("VALID %-16s %d-%02d-%02d\t\t%d-%02d-%02d\t  %-8d %-8d %s \n", order_num, startD[0],startD[1],startD[2], endD[0],endD[1],endD[2], days, quantity,plantName);
     fclose(fp);
 }
 void schChild(int in_pipe[][2],int out_pipe[][2]) {
     close(in_pipe[0][1]);
     close(out_pipe[0][0]);
-    char deck[5][10], ch;
+    char deck[5][30], ch;
     int n, totaldays=totalday(startDate,endDate),ord=0,ordTemp=0,j=0,i,x,y;
     int availDate[3][3], sizePlants[] = {300,400,600};
     for (i = 0; i < 3 ; ++i) {memcpy(availDate[i], startDate, sizeof(startDate));}
@@ -353,14 +357,14 @@ void schChild(int in_pipe[][2],int out_pipe[][2]) {
             fclose(fp1);
             fclose(fp2);
             ord=0;
-            strcpy(deck[0],"SJF");
+            strcpy(deck[0],"doneS");
             write(out_pipe[0][1],deck,sizeof(deck));
         }
         else if (strcmp(deck[0], "REPO") == 0) {
             int accepRejec[2]={0,0},usagePlants[3]={0,0,0},prodPlants[3]={0,0,0};
             counterVariables(accepRejec,usagePlants,prodPlants);
             reportGenerator(accepRejec,usagePlants,prodPlants,deck[1],deck[2]);
-            strcpy(deck[0],"done");
+            strcpy(deck[0],"doneA");
             write(out_pipe[0][1],deck,sizeof(deck));
         }
         else if (strcmp(deck[0], "f") == 0) {
@@ -455,6 +459,11 @@ void runSJF(){
 
     runPLS();
 }
+void runANA(){
+    int accepRejec[2]={0,0},usagePlants[3]={0,0,0},prodPlants[3]={0,0,0};
+    counterVariables(accepRejec,usagePlants,prodPlants);
+    reportGenerator(accepRejec,usagePlants,prodPlants,"FCFS","report_01_FCFS.txt");
+}
 
 void createChild(int ppid, int in_pipe[][2],int out_pipe[][2]){
     if ((pipe(in_pipe[0]) < 0) || (pipe(out_pipe[0]) < 0)) {
@@ -478,7 +487,7 @@ void createChild(int ppid, int in_pipe[][2],int out_pipe[][2]){
 void runcmd(char command[],int count) {
     int ppid = getpid();
     int in_pipe[1][2]; int out_pipe[1][2];
-    char deck[5][10];char *algoUsed;
+    char deck[5][30];char *algoUsed;
 
     if (strstr(command, "addPEIOD") != NULL) {
         addPEIOD(command);
@@ -494,11 +503,7 @@ void runcmd(char command[],int count) {
             strcpy(deck[0], "FCFS");
             write(in_pipe[0][1], deck, sizeof(deck));
             read(out_pipe[0][0], deck, sizeof(deck));
-            strcpy(deck[0], "f");
-            write(in_pipe[0][1], deck, sizeof(deck));
-            read(out_pipe[0][0], deck, sizeof(deck));
-            //runPLS(ptr,count);
-            //printf("runPLS");
+
         } else if (strstr(command, "SJF") != NULL) {
             algoUsed="SJF";
             clearPlants();
@@ -509,20 +514,22 @@ void runcmd(char command[],int count) {
             strcpy(deck[0], "SJF2");
             write(in_pipe[0][1], deck, sizeof(deck));
             read(out_pipe[0][0], deck, sizeof(deck));
-            strcpy(deck[0], "f");
-            write(in_pipe[0][1], deck, sizeof(deck));
-            read(out_pipe[0][0], deck, sizeof(deck));
+
         }
         if (strstr(command, "printREPORT") != NULL) {
             int i = 0;
-            char *token = strtok(command, " ");
+            char delimiter[] = " \n";
+            char *token = strtok(command, delimiter);
             while (i != 5) {
                 i++;
-                token = strtok(NULL, " ");
+                token = strtok(NULL, delimiter);
             }
             strcpy(deck[0], "REPO");
             strcpy(deck[1], algoUsed);
             strcpy(deck[2], token);
+            write(in_pipe[0][1], deck, sizeof(deck));
+            read(out_pipe[0][0], deck, sizeof(deck));
+            strcpy(deck[0], "f");
             write(in_pipe[0][1], deck, sizeof(deck));
             read(out_pipe[0][0], deck, sizeof(deck));
         }
