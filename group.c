@@ -15,7 +15,7 @@ struct Schedule{
 };
 
 struct Schedule schedule[3];
-int startDate[3], endDate[3], numOrders = 6; //why 5???
+int startDate[3], endDate[3],numOrders=0;// numOrders = 6; //why 5???
 const int SIZE = 80;
 long numDays;
 
@@ -491,7 +491,7 @@ void runcmd(char command[],int count) {
 
     if (strstr(command, "addPEIOD") != NULL) {
         addPEIOD(command);
-    } else if (strstr(command, "addPEIOD") != NULL) {
+    } else if (strstr(command, "addORDER") != NULL) {
         addORDER(command);
     } else if (strstr(command, "addBATCH") != NULL) {
         addBATCH(command, count);
