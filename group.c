@@ -36,7 +36,7 @@ void runANA();
 bool isDatevalid(char date1[3],char *order1,int availDate[3],int plant);
 void flusharray(char **arr);
 void writeValid(char* order_num,int startD[3], int endD[3], int days, int quantity, char *plantName);
-
+void clearPlants();
 int main(int argc,char *argv[]){
 
 //    char**ba=getOrder(4);
@@ -48,7 +48,7 @@ int main(int argc,char *argv[]){
 //    fclose(fp);
 //    fp = fopen("temp.txt","w");
 //    fclose(fp);
-
+    clearPlants();
     printf("~~WELCOME TO PLS~~\n\n");
     printf("Please enter:\n");
     while(1){
