@@ -135,13 +135,13 @@ void clearPlants(){
     FILE *fp5 = fopen("valid.txt","w");
     fclose(fp1);fclose(fp2);fclose(fp3);fclose(fp4);fclose(fp5);
 }
-int* dateFormater(char date[3]){
+/*int* dateFormater(char date[3]){
     int intDate[3];
     sscanf(& date[0], "%d", &intDate[0]);
     sscanf(& date[5], "%d", &intDate[1]);
     sscanf(& date[8], "%d", &intDate[2]);
     return intDate;
-}
+}*/
 void counterVariables(int accepRejec[2],int usagePlants[3],int prodPlants[3] ){
     FILE *fp = fopen("valid.txt","r");if(fp == NULL){printf("Error!");exit(1);}
     int prod_index=0;
