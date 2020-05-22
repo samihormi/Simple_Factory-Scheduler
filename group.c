@@ -198,7 +198,7 @@ void reportGenerator(int accepRejec[2],int usagePlants[3],int prodPlants[3],char
     double utilPlants[3]={300,400,600};
     int i;
     for (i = 0; i < 3 ; ++i) {
-        utilPlants[i]= (float)prodPlants[i]/(float)(totalday(startDate,endDate)*utilPlants[i]);
+        utilPlants[i]= ((float)prodPlants[i]/(float)(totalday(startDate,endDate)*utilPlants[i]))*100;
     }
     FILE *fp = fopen(outputFile,"w+");
     fprintf(fp,"***PLS Schedule Analysis Report***\r\n\r\nAlgorithm used: %s\r\n\r\nThere are %d Orders ACCEPTED. Details are as follows:\r\n\r\n",algoUsed,accepRejec[0]);
