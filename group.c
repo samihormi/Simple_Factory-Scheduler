@@ -48,7 +48,7 @@ int main(int argc,char *argv[]){
 //    fclose(fp);
 //    fp = fopen("temp.txt","w");
 //    fclose(fp);
-    clearPlants();
+    clearPlants(0);
     printf("~~WELCOME TO PLS~~\n\n");
     printf("Please enter:\n");
     while(1){
@@ -58,7 +58,7 @@ int main(int argc,char *argv[]){
         }
         if(strncmp(command, "-1", 2) != 0){
             runcmd(command,sizeof(command)/sizeof(int));
-            //runSJF();
+           // runSJF();
            //runPLS();
            //runANA();
             strcpy(command, "-1");
@@ -127,7 +127,8 @@ bool isDatevalid(char date1[3],char *order1,int availDate[3],int plant){
         return true;
     } else {return false;}
 }
-void clearPlants(){
+void clearPlants(int flag){
+    if (flag==0){  FILE *fp6 = fopen("orders.txt","w");fclose(fp6);}
     FILE *fp1 = fopen("PlantX.txt","w");
     FILE *fp2 = fopen("PlantY.txt","w");
     FILE *fp3 = fopen("PlantZ.txt","w");
@@ -280,10 +281,10 @@ void schChild(int in_pipe[][2],int out_pipe[][2]) {
     int n, totaldays=totalday(startDate,endDate),ord=0,ordTemp=0,j=0,i,x,y;
     int availDate[3][3], sizePlants[] = {300,400,600};
     for (i = 0; i < 3 ; ++i) {memcpy(availDate[i], startDate, sizeof(startDate));}
-    int num = 6 , arr[num][2];
 
     while ((n = read(in_pipe[0][0], deck, sizeof(deck)) > 0)) {
         if (strcmp(deck[0], "FCFS") == 0 || strcmp(deck[0], "SJF2") == 0) {
+            ord=0;
             char *filename= (strcmp(deck[0],"FCFS")==0) ? "orders.txt":"temp.txt" ;
             while (ord < numOrders) {
                 char **buf = getOrder(ord, filename);
@@ -307,8 +308,10 @@ void schChild(int in_pipe[][2],int out_pipe[][2]) {
             write(out_pipe[0][1],deck,sizeof(deck));
         }
         else if(strcmp(deck[0], "SJF") == 0){
+            ord = 0;
+            int arr[numOrders][2];
             i = 0;
-            while (ord < num){
+            while (ord < numOrders){
                 char **buf = getOrder(ord, "orders.txt");
                 sscanf(buf[2], "%d", &arr[i][0]);
                 arr[i][1] = i;
@@ -316,8 +319,8 @@ void schChild(int in_pipe[][2],int out_pipe[][2]) {
                 ord++;
                 flusharray(buf);
             }
-            for(i=0; i<num-1; i++){
-                for(j=i+1; j<num; j++){
+            for(i=0; i<numOrders-1; i++){
+                for(j=i+1; j<numOrders; j++){
                     if(arr[i][0] > arr[j][0]){
                         x = arr[i][0];
                         y = arr[i][1];
@@ -344,7 +347,7 @@ void schChild(int in_pipe[][2],int out_pipe[][2]) {
             fp2 = fopen("orders.txt","r");
 
             ord = 0;
-            while (ord < num){
+            while (ord < numOrders){
                 char **buf = getOrder(arr[ord][1], "orders.txt");
                 for(i = 0; i < 4; i++){
                     fprintf(fp1,"%s ",buf[i]);
@@ -377,7 +380,7 @@ void schChild(int in_pipe[][2],int out_pipe[][2]) {
 }
 
 void runPLS() {
-    clearPlants();
+    clearPlants(1);
     char deck[5][10];
     int  flag = 0, ord = 0, j = 0,i;
     int availDate[3][3], sizePlants[] = {300, 400, 600};
@@ -406,7 +409,7 @@ void runPLS() {
 
 }
 void runSJF(){
-    int i = 0,j,x,y,ord=0, num = 6,arr[num][2];
+    int i = 0,j,x,y,ord=0, num = 2,arr[num][2];
     char ch;
     while (ord < num){
         char **buf = getOrder(ord, "orders.txt");
@@ -498,7 +501,7 @@ void runcmd(char command[],int count) {
     } else if (strstr(command, "runPLS") != NULL) {
         if (strstr(command, "FCFS") != NULL) {
             algoUsed="FCFS";
-            clearPlants();
+            clearPlants(1);
             createChild(ppid, in_pipe, out_pipe);
             strcpy(deck[0], "FCFS");
             write(in_pipe[0][1], deck, sizeof(deck));
@@ -506,7 +509,7 @@ void runcmd(char command[],int count) {
 
         } else if (strstr(command, "SJF") != NULL) {
             algoUsed="SJF";
-            clearPlants();
+            clearPlants(1);
             createChild(ppid, in_pipe, out_pipe);
             strcpy(deck[0], "SJF");
             write(in_pipe[0][1], deck, sizeof(deck));
