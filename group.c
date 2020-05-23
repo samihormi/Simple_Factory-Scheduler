@@ -625,6 +625,9 @@ void addORDER(char arr[]){
     numOrders++;
     //printf("%s %s %d %s\n", schedule[numOrders].orderNum, schedule[numOrders].dueDate, schedule[numOrders].quantity, schedule[numOrders].productName);
 }
+void batchy(){
+
+}
 void addBATCH(char arr[], int count){
     int i;
     char a[100], buf[150], line[100] = "";
@@ -635,13 +638,12 @@ void addBATCH(char arr[], int count){
     a[i] = '\0';
 
     strtok(arr, " ");
-    char * token = strtok(NULL, " ");
-
-    strcat(line, a);
-    char* filename = line;
-    fp = fopen(filename ,"r");
-    while(fgets(buf, 150, (FILE*)fp) != NULL){
-        addORDER(buf);
+    char delimit[]=" \n";
+    char * token = strtok(NULL, delimit);
+    fp = fopen(token ,"r"); if(fp == NULL){printf("Error!\n");exit(1);}
+    while(fgets(buf, sizeof(buf), (FILE*)fp) != NULL){
+        token = strtok(buf, "\n");
+        addORDER(token);
     }
     fclose(fp);
 }
