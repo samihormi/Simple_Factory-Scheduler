@@ -203,14 +203,14 @@ void reportGenerator(int accepRejec[2],int usagePlants[3],int prodPlants[3],char
     }
     FILE *fp = fopen(outputFile,"w+");
     fprintf(fp,"***PLS Schedule Analysis Report***\r\n\r\nAlgorithm used: %s\r\n\r\nThere are %d Orders ACCEPTED. Details are as follows:\r\n\r\n",algoUsed,accepRejec[0]);
-    fprintf(fp,"ORDER NUMBER\t START\t\t\tEND\t\t\tDAYS\tQUANTITY\tPLANT\r\n===========================================================================\r\n");
+    fprintf(fp,"ORDER NUMBER\t START\t\t\tEND\t\tDAYS\tQUANTITY\tPLANT\r\n===========================================================================\r\n");
 
     FILE *fp1 = fopen("valid.txt","r");
     char c=fgetc(fp1);
     while (c !=EOF){fprintf (fp,"%c", c);c = fgetc(fp1); }fclose(fp1);
     fprintf(fp,"\t\t\t\t\t\t\t- End -\r\n\r\n===========================================================================\r\n\r\n\r\n");
     fprintf(fp,"There are %d Orders REJECTED. Details are as follows:\r\n\r\n",accepRejec[1]);
-    fprintf(fp,"ORDER NUMBER\tPRODUCT NAME\tDue Date\t\tQUANTITY\r\n===========================================================================\r\n");
+    fprintf(fp,"ORDER NUMBER\tPRODUCT NAME\tDue Date\tQUANTITY\r\n===========================================================================\r\n");
     fp1 = fopen("invalid.txt","r");c=fgetc(fp1);
     while (c !=EOF){fprintf (fp,"%c", c);c = fgetc(fp1); }fclose(fp1);
     fprintf(fp,"\t\t\t\t\t\t\t- End -\r\n\r\n===========================================================================\r\n\r\n\r\n");
