@@ -59,7 +59,7 @@ int main(int argc,char *argv[]){
         if(strncmp(command, "-1", 2) != 0){
             runcmd(command,sizeof(command)/sizeof(int));
            // runSJF();
-           //runPLS();
+           runPLS();
            //runANA();
             strcpy(command, "-1");
             printf("Please enter:\n");
