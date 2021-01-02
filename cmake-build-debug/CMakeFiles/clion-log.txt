@@ -1,4 +1,0 @@
-/Applications/CLion.app/Contents/bin/cmake/mac/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" "/Users/samihormi/Desktop/Operating Systems/Production_Line_Scheduler"
--- Configuring done
--- Generating done
--- Build files have been written to: /Users/samihormi/Desktop/Operating Systems/Production_Line_Scheduler/cmake-build-debug
