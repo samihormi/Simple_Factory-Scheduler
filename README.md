@@ -19,4 +19,11 @@ The implementation of those algorithms is non-preemptive.
   * The  test data folder contains four batch files containg a series of commands of various types
 # Example
   *  The files "*report_01_FCFS.txt*" and "*report_01_SJF.txt*" contain the schedule of the Factory using FCFS and SJF respectively, on the orders of the batch file "*TestData/randomSizeTest.dat*"
+  * The schedules include:
+  	* The table of Accepted orders
+	* The tables of Rejected orders
+  	* The number of days each plant is used 
+	* The number of products produced
+	* The utilization of each plant (%)
+	* The overall utilization of the factory (%)
 
